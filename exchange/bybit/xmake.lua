@@ -1,0 +1,15 @@
+target("exchange-bybit")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/exchange/bybit/**/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("components-feeder", "exchange-common", "codec-json", "protocol-bybit", "protocol-feeder", "protocol-common",  {public = true})
+target_end()
+
+
+target("exchange-bybit-test")
+    set_kind("binary")
+    set_group("test")
+    add_files("test/*.cpp")
+    add_deps("exchange-bybit")
+    add_packages("gtest")
+target_end()

@@ -1,0 +1,18 @@
+target("types")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/types/*.hpp")
+    add_includedirs("include", {public = true})
+    add_defines("BOOST_STATIC_STRING_STANDALONE", {public = true})
+    add_deps("concepts", "core", "meta", {public = true})
+    add_packages("strong_type", "boost", "xxhash", "abseil", {public = true})
+target_end()
+
+target("types-test")
+    set_kind("binary")
+    set_group("test")
+    add_files("test/*.cpp")
+    add_deps("types")
+    add_packages("gtest")
+    set_group("test")
+target_end()
+

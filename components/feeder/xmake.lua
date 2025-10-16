@@ -1,0 +1,15 @@
+target("components-feeder")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/components/feeder/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("network", "components-scheduler", "protocol-feeder", {public = true})
+target_end()
+
+
+target("components-feeder-test")
+    set_kind("binary")
+    set_group("test")
+    add_files("test/*.cpp")
+    add_deps("components-feeder")
+    add_packages("gtest")
+target_end()

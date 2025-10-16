@@ -1,0 +1,7 @@
+target("meta")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/meta/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("concepts", "core", {public = true})
+    add_packages("magic_enum", {public = true})
+target_end()

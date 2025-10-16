@@ -1,0 +1,7 @@
+target("protocol-common")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/protocol/common/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("logger", "reflect", "result", "types", {public = true})
+    add_packages("frozen", {public = true})
+target_end()

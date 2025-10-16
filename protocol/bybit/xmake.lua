@@ -1,0 +1,17 @@
+target("protocol-bybit")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/protocol/bybit/**/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("logger", "reflect", "result", {public = true})
+    add_packages("frozen", {public = true})
+target_end()
+
+target("protocol-bybit-test")
+    set_kind("binary")
+    set_group("test")
+    add_files("test/*.cpp")
+    add_deps("protocol-bybit")
+    add_packages("gtest")
+    set_group("test")
+target_end()
+

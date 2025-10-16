@@ -1,0 +1,7 @@
+target("protocol-feeder")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/protocol/feeder/**/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("logger", "reflect", "result", "protocol-common", {public = true})
+    add_packages("frozen", {public = true})
+target_end()

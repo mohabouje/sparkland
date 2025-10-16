@@ -1,0 +1,7 @@
+target("reflect")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/reflect/*.hpp")
+    add_includedirs("include", { public = true })
+    add_deps("types", "meta", { public = true })
+    add_packages("fmt", "magic_enum",  { public = true })
+target_end()

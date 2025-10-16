@@ -1,0 +1,174 @@
+Checks:  >
+  -*,
+  bugprone-*,
+  modernize-*,
+  misc-*,
+  performance-*,
+  -clang-analyzer-*,
+  -clang-diagnostic-error,
+  readability-*,
+  -readability-named-parameter,
+  -readability-magic-numbers,
+  -readability-isolate-declaration,
+  -readability-static-accessed-through-instance,
+  -misc-non-private-member-variables-in-classes,
+  -bugprone-easily-swappable-parameters
+
+MinimumLoopCounterNameLength: 1
+MinimumExceptionNameLength: 1
+IgnoredVariableNames: ^\s*(?:.*\b(i|j|x|_)\b.*)$
+InheritParentConfig: true
+AnalyzeTemporaryDtors: false
+WarningsAsErrors: "-*"
+# HeaderFileExtensions: ['hpp']
+# ImplementationFileExtensions: ['cpp']
+HeaderFilterRegex: '^((?!/.conan/|/.xmake/).)*$'
+FormatStyle: "file"
+UseColor: true
+CheckOptions:
+  - { key: modernize-use-default-member-init.UseAssignment, value: false }
+  - { key: modernize-use-default-member-init.IgnoreMacros, value: false }
+
+  # Namespace naming convention
+  - {
+      key: readability-identifier-naming.InlineNamespaceCase,
+      value: lower_case,
+    }
+  - { key: readability-identifier-naming.NamespaceCase, value: lower_case }
+
+  # Function naming convention
+  - { key: readability-identifier-naming.FunctionCase, value: lower_case }
+  - { key: readability-identifier-naming.FunctionPrefix, value: "" }
+  - { key: readability-identifier-naming.FunctionSuffix, value: "" }
+
+  # Static variable convention
+  - { key: readability-identifier-naming.StaticVariableCase, value: lower_case }
+  - { key: readability-identifier-naming.StaticVariableCasePrefix, value: "" }
+  - { key: readability-identifier-naming.StaticVariableCaseSuffix, value: "" }
+
+  # Static variable convention [consant]
+  - { key: readability-identifier-naming.StaticConstantCase, value: UPPER_CASE }
+  - { key: readability-identifier-naming.StaticConstantPrefix, value: "" }
+  - { key: readability-identifier-naming.StaticConstantSuffix, value: "" }
+
+  # Local variable convention
+  - { key: readability-identifier-naming.LocalVariableCase, value: lower_case }
+  - { key: readability-identifier-naming.LocalVariablePrefix, value: "" }
+
+  # Parameter convention
+  - { key: readability-identifier-naming.ParameterCase, value: lower_case }
+  - { key: readability-identifier-naming.ParameterPrefix, value: "" }
+  - { key: readability-identifier-naming.ParameterSuffix, value: "" }
+
+  # Pointer parameter convention
+  - {
+      key: readability-identifier-naming.PointerParameterCase,
+      value: lower_case,
+    }
+  - { key: readability-identifier-naming.PointerParameterPrefix, value: "" }
+  - { key: readability-identifier-naming.PointerParameterSuffix, value: "" }
+
+  # Global naming convention
+  - { key: readability-identifier-naming.GlobalFunctionCase, value: lower_case }
+  - { key: readability-identifier-naming.GlobalFunctionPrefix, value: "" }
+  - { key: readability-identifier-naming.GlobalFunctionSuffix, value: "" }
+  - { key: readability-identifier-naming.GlobalVariableCase, value: lower_case }
+  - { key: readability-identifier-naming.GlobalVariablePrefix, value: "" }
+  - { key: readability-identifier-naming.GlobalVariableSuffix, value: "" }
+  - { key: readability-identifier-naming.GlobalPointerCase, value: lower_case }
+  - { key: readability-identifier-naming.GlobalPointerPrefix, value: "" }
+  - { key: readability-identifier-naming.GlobalPointerSuffix, value: "" }
+
+  # Macro naming convention
+  - {
+      key: readability-identifier-naming.MacroDefinitionCase,
+      value: UPPER_CASE,
+    }
+  - {
+      key: readability-identifier-naming.MacroDefinitionPrefix,
+      value: "SPL_",
+    }
+  - { key: readability-identifier-naming.MacroDefinitionSuffix, value: "" }
+
+  # Class/Struct/Union naming convention
+  - { key: readability-identifier-naming.StructCase, value: lower_case }
+  - { key: readability-identifier-naming.UnionCase, value: lower_case }
+  - { key: readability-identifier-naming.ClassCase, value: lower_case }
+
+  # Abstract class naming convention
+  - { key: readability-identifier-naming.AbstractClassCase, value: lower_case }
+  - { key: readability-identifier-naming.AbstractClassPrefix, value: "" }
+  - { key: readability-identifier-naming.AbstractClassSuffix, value: "_i" }
+
+  # Class - Constant naming convention
+  - { key: readability-identifier-naming.ClassConstantCase, value: lower_case }
+  - { key: readability-identifier-naming.ClassConstantPrefix, value: "" }
+  - { key: readability-identifier-naming.ClassConstantSuffix, value: "" }
+
+  # Class - Public method/members
+  - { key: readability-identifier-naming.MemberCase, value: lower_case }
+  - { key: readability-identifier-naming.MemberPrefix, value: "" }
+  - { key: readability-identifier-naming.MemberSuffix, value: "" }
+  - { key: readability-identifier-naming.MethodCase, value: lower_case }
+  - { key: readability-identifier-naming.MethodPrefix, value: "" }
+  - { key: readability-identifier-naming.MethodSuffix, value: "" }
+
+  # Class - Private method/members
+  - { key: readability-identifier-naming.PrivateMemberCase, value: lower_case }
+  - { key: readability-identifier-naming.PrivateMemberPrefix, value: "" }
+  - { key: readability-identifier-naming.PrivateMemberSuffix, value: "_" }
+  - { key: readability-identifier-naming.PrivateMethodCase, value: lower_case }
+  - { key: readability-identifier-naming.PrivateMethodPrefix, value: "" }
+  - { key: readability-identifier-naming.PrivateMethodSuffix, value: "" }
+
+  # Class - Constant variables
+  - { key: readability-identifier-naming.ClassConstantCase, value: lower_case }
+  - { key: readability-identifier-naming.ClassConstantPrefix, value: "" }
+  - { key: readability-identifier-naming.ClassConstantSuffix, value: "" }
+
+  # Alias convention
+  - { key: readability-identifier-naming.TypeAliasCase, value: lower_case }
+  - { key: readability-identifier-naming.TypeAliasCasePrefix, value: "" }
+  - { key: readability-identifier-naming.TypeAliasCaseSuffix, value: "" }
+
+  # Typedef convention
+  - { key: readability-identifier-naming.TypedefCase, value: lower_case }
+  - { key: readability-identifier-naming.TypedefCasePrefix, value: "" }
+  - { key: readability-identifier-naming.TypedefCaseSuffix, value: "_t" }
+  - { key: readability-identifier-naming.TypedefIgnoredRegexp, value: "" }
+
+  # Enum convention
+  - { key: readability-identifier-naming.EnumCase, value: lower_case }
+  - { key: readability-identifier-naming.EnumConstantCase, value: lower_case }
+
+  # Template convention
+  - {
+      key: readability-identifier-naming.TemplateParameterCase,
+      value: CamelCase,
+    }
+  - { key: readability-identifier-naming.TemplateParameterPrefix, value: "" }
+  - { key: readability-identifier-naming.TemplateParameterSuffix, value: "" }
+  - {
+      key: readability-identifier-naming.TemplateTemplateParameterCase,
+      value: CamelCase,
+    }
+  - {
+      key: readability-identifier-naming.TemplateTemplateParameterPrefix,
+      value: "",
+    }
+  - {
+      key: readability-identifier-naming.TemplateTemplateParameterSuffix,
+      value: "",
+    }
+  - {
+      key: readability-identifier-naming.ValueTemplateParameterCase,
+      value: "CamelCase",
+    }
+  - {
+      key: readability-identifier-naming.ValueTemplateParameterPrefix,
+      value: "",
+    }
+  - {
+      key: readability-identifier-naming.ValueTemplateParameterSuffix,
+      value: "",
+    }
