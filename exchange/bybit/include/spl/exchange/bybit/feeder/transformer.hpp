@@ -3,6 +3,7 @@
 #include "spl/meta/typeinfo.hpp"
 #include "spl/result/result.hpp"
 
+#include "spl/protocol/feeder/trade/trade_summary.hpp"
 #include "spl/protocol/feeder/stream/heartbeat.hpp"
 #include "spl/protocol/feeder/stream/ping.hpp"
 #include "spl/protocol/feeder/stream/pong.hpp"
@@ -33,8 +34,8 @@ namespace spl::exchange::bybit::feeder {
         [[nodiscard]] constexpr auto to_channel(spl::protocol::feeder::stream::channel type,
                                                 std::string_view symbol) noexcept -> std::string {
             switch (type) {
-                case spl::protocol::feeder::stream::channel::level2:
-                    return std::format("orderbook.{}.{}", 50, symbol);
+                case spl::protocol::feeder::stream::channel::trades:
+                    return std::format("publicTrade.{}", symbol);
                 default:
                     return "not supported";
             }
@@ -119,6 +120,28 @@ namespace spl::exchange::bybit::feeder {
                 .channel     = spl::protocol::feeder::stream::channel::level2,
                 .timestamp   = std::chrono::steady_clock::now().time_since_epoch(),
             });
+        }
+
+        template <typename FunctorT>
+        [[nodiscard]] auto operator()(spl::protocol::bybit::websocket::public_stream::trade::trade const& input,
+                                      FunctorT&& functor) noexcept -> spl::result<void> {
+            for (auto const& item : input.data) {
+                auto const price        = spl::types::price::from(item.p);
+                auto const quantity     = spl::types::quantity::from(item.v);
+                auto const side         = spl::protocol::common::aggressor_side(item.S == "Buy");
+                auto const milliseconds = std::chrono::milliseconds(boost::lexical_cast<std::uint64_t>(item.T));
+                auto const nanoseconds  = std::chrono::duration_cast<std::chrono::nanoseconds>(milliseconds);
+                auto const sequence     = spl::protocol::common::sequence(item.seq);
+                err_return(functor(spl::protocol::feeder::trade::trade_summary{
+                    .exchange_id = spl::protocol::common::exchange_id::bybit,
+                    .side        = side,
+                    .price       = price,
+                    .quantity    = quantity,
+                    .sequence    = sequence,
+                    .timestamp   = spl::protocol::common::timestamp(nanoseconds),
+                }));
+            }
+            return spl::success();
         }
 
         template <typename FunctorT>

@@ -4,6 +4,7 @@
 #include "spl/protocol/bybit/websocket/public_stream/pong.hpp"
 #include "spl/protocol/bybit/websocket/public_stream/subscribe/request.hpp"
 #include "spl/protocol/bybit/websocket/public_stream/unsubscribe/request.hpp"
+#include "spl/protocol/bybit/websocket/public_stream/trade/trade.hpp"
 
 #include <spl/reflect/reflect.hpp>
 #include <spl/result/result.hpp>
@@ -25,7 +26,7 @@ namespace spl::protocol::bybit::websocket::public_stream {
         using error_type   = typename encoder_type::error_type;
 
         struct hasher {
-            constexpr static auto mapper = frozen::unordered_map<frozen::string, std::size_t, 4>{
+            constexpr static auto mapper = frozen::unordered_map<frozen::string, std::size_t, 5>{
                 {spl::reflect::identifier<
                      spl::protocol::bybit::websocket::public_stream::subscribe::request>::unique_id,
                  0                                                                                                       },
@@ -34,6 +35,7 @@ namespace spl::protocol::bybit::websocket::public_stream {
                  1                                                                                                       },
                 {spl::reflect::identifier<spl::protocol::bybit::websocket::public_stream::ping>::unique_id,             2},
                 {spl::reflect::identifier<spl::protocol::bybit::websocket::public_stream::pong>::unique_id,             3},
+                {spl::reflect::identifier<spl::protocol::bybit::websocket::public_stream::trade::trade>::unique_id,     4},
             };
 
             template <typename ObjectT>

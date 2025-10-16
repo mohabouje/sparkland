@@ -13,7 +13,7 @@ TEST(ExchangeBybitFeederTest, EstablishConnection) {
     ASSERT_TRUE(operation) << "Failed to connect: " << operation.error().message().data();
 }
 
-TEST(ExchangeBybitFeederTest, FetchTickerData) {
+TEST(ExchangeBybitFeederTest, FetchTradesData) {
     auto context    = spl::network::context();
     auto identifier = spl::components::feeder::session_id{"client", "bybit"};
     auto session    = production(context, identifier);
@@ -23,7 +23,7 @@ TEST(ExchangeBybitFeederTest, FetchTickerData) {
     auto const sent = session.send(spl::protocol::feeder::stream::subscribe{
         .exchange_id   = spl::protocol::common::exchange_id::bybit,
         .instrument_id = spl::protocol::common::instrument_id{"BTCUSDT"},
-        .channel       = spl::protocol::feeder::stream::channel::level2,
+        .channel       = spl::protocol::feeder::stream::channel::trades,
     });
     ASSERT_TRUE(sent) << "Failed to send subscription request: " << sent.error().message().data();
 

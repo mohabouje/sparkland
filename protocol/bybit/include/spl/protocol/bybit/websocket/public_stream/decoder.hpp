@@ -4,6 +4,7 @@
 #include "spl/protocol/bybit/websocket/public_stream/pong.hpp"
 #include "spl/protocol/bybit/websocket/public_stream/subscribe/response.hpp"
 #include "spl/protocol/bybit/websocket/public_stream/unsubscribe/response.hpp"
+#include "spl/protocol/bybit/websocket/public_stream/trade/trade.hpp"
 
 #include <spl/logger/logger.hpp>
 #include <spl/reflect/reflect.hpp>
@@ -19,19 +20,21 @@ namespace spl::protocol::bybit::websocket::public_stream {
     template <typename DecoderT, template <typename ObjectT> class TaggerT>
     struct decoder {
         using decoder_type = std::decay_t<DecoderT>;
-        using value_type   = std::variant<bybit::websocket::public_stream::ping,                //
-                                          bybit::websocket::public_stream::pong,                //
-                                          bybit::websocket::public_stream::subscribe::response, //
-                                          bybit::websocket::public_stream::unsubscribe::response>;
+        using value_type   = std::variant<bybit::websocket::public_stream::ping,                  //
+                                          bybit::websocket::public_stream::pong,                  //
+                                          bybit::websocket::public_stream::subscribe::response,   //
+                                          bybit::websocket::public_stream::unsubscribe::response, //
+                                          bybit::websocket::public_stream::trade::trade>;
         using tagger_type  = TaggerT<value_type>;
         using error_type   = typename decoder_type::error_type;
 
         struct hasher {
-            constexpr static auto mapper = frozen::unordered_map<frozen::string, std::size_t, 4>{
+            constexpr static auto mapper = frozen::unordered_map<frozen::string, std::size_t, 5>{
                 {spl::reflect::identifier<ping>::unique_id,                  0},
                 {spl::reflect::identifier<pong>::unique_id,                  1},
                 {spl::reflect::identifier<subscribe::response>::unique_id,   2},
-                {spl::reflect::identifier<unsubscribe::response>::unique_id, 3}
+                {spl::reflect::identifier<unsubscribe::response>::unique_id, 3},
+                {spl::reflect::identifier<trade::trade>::unique_id,          4}
             };
 
             template <typename ObjectT>
@@ -80,6 +83,12 @@ namespace spl::protocol::bybit::websocket::public_stream {
                 }
                 case hasher::template hash<spl::protocol::bybit::websocket::public_stream::unsubscribe::response>(): {
                     using object_type  = spl::protocol::bybit::websocket::public_stream::unsubscribe::response;
+                    auto const bytes   = err_return(decode<object_type>(view, std::forward<HandlerT>(handler)));
+                    auto const decoded = header + bytes;
+                    return decoded;
+                }
+                case hasher::template hash<spl::protocol::bybit::websocket::public_stream::trade::trade>(): {
+                    using object_type  = spl::protocol::bybit::websocket::public_stream::trade::trade;
                     auto const bytes   = err_return(decode<object_type>(view, std::forward<HandlerT>(handler)));
                     auto const decoded = header + bytes;
                     return decoded;
