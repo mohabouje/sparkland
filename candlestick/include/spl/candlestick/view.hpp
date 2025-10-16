@@ -1,6 +1,9 @@
 #pragma once
 
-#include <spl/api/feeder/candlestick/candlestick.hpp>
+#include "spl/protocol/common/price.hpp"
+#include "spl/protocol/common/quantity.hpp"
+
+#include <span>
 
 namespace spl::candlestick {
 
