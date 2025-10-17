@@ -9,6 +9,7 @@ namespace spl::protocol::common {
         unknown,
         binance,
         bybit,
+        coinbase,
         kucoin,
         poloniex
 

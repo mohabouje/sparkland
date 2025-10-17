@@ -1,0 +1,15 @@
+target("exchange-coinbase")
+    set_kind("headeronly")
+    add_headerfiles("include/spl/exchange/coinbase/**/*.hpp")
+    add_includedirs("include", {public = true})
+    add_deps("components-feeder", "exchange-common", "codec-json", "protocol-coinbase", "protocol-feeder", "protocol-common",  {public = true})
+target_end()
+
+
+target("exchange-coinbase-test")
+    set_kind("binary")
+    set_group("test")
+    add_files("test/*.cpp")
+    add_deps("exchange-coinbase")
+    add_packages("gtest")
+target_end()

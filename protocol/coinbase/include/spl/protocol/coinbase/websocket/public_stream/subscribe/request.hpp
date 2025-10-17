@@ -11,7 +11,6 @@
 namespace spl::protocol::coinbase::websocket::public_stream::subscribe {
 
     struct request {
-        std::string type;
         std::vector<channel> channels;
     };
 

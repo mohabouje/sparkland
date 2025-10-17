@@ -9,7 +9,6 @@
 namespace spl::protocol::coinbase::websocket::public_stream::ticker {
 
     struct ticker {
-        std::string type;
         std::int64_t sequence;
         std::string product_id;
         std::string price;
