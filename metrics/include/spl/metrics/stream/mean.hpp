@@ -43,14 +43,12 @@ namespace spl::metrics::stream {
               template <typename...> class ContainerT = std::deque, //
               typename PredicateT                     = internal::timeline_predicate>
     struct mean {
-        using container_type = spl::metrics::timeline<ObjectT, ContainerT, PredicateT>;
-        using value_type     = spl::types::price;
+        using value_type = spl::types::price;
 
         /**
          * @brief Construct a streaming mean metric
-         * @param reference Reference to the timeline container
          */
-        constexpr explicit mean(container_type& reference) noexcept : reference_{reference} {}
+        constexpr mean() noexcept = default;
 
         /**
          * @brief Query the current mean value
@@ -61,7 +59,7 @@ namespace spl::metrics::stream {
             if (count_ == 0) [[unlikely]] {
                 return spl::failure("Cannot compute mean of an empty timeline");
             }
-            return value_type{accumulated_.value / static_cast<double>(count_)};
+            return value_type::from(accumulated_ / static_cast<double>(count_));
         }
 
         /**
@@ -73,7 +71,7 @@ namespace spl::metrics::stream {
         template <typename IteratorT>
         constexpr auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
             for (auto it = begin; it != end; ++it) {
-                accumulated_ -= it->price;
+                accumulated_ -= static_cast<double>(it->price);
                 --count_;
             }
         }
@@ -84,14 +82,13 @@ namespace spl::metrics::stream {
          * @complexity O(1)
          */
         constexpr auto operator()(ObjectT const& value) noexcept -> void {
-            accumulated_ += value.price;
+            accumulated_ += static_cast<double>(value.price);
             ++count_;
         }
 
     private:
-        container_type& reference_;
-        value_type accumulated_{}; ///< Running sum of all prices
-        std::size_t count_{0};     ///< Count of elements in window
+        double accumulated_{0.0}; ///< Running sum of all prices
+        std::size_t count_{0};    ///< Count of elements in window
     };
 
 } // namespace spl::metrics::stream

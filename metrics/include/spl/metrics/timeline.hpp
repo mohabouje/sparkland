@@ -64,7 +64,7 @@ namespace spl::metrics {
         }
 
         [[nodiscard]] constexpr auto begin() const noexcept -> const_iterator {
-            return std::cbegin(values_);
+            return std::begin(values_);
         }
 
         [[nodiscard]] constexpr auto cbegin() const noexcept -> const_iterator {
@@ -76,7 +76,7 @@ namespace spl::metrics {
         }
 
         [[nodiscard]] constexpr auto end() const noexcept -> const_iterator {
-            return std::cend(values_);
+            return std:: end(values_);
         }
 
         [[nodiscard]] constexpr auto cend() const noexcept -> const_iterator {
@@ -157,7 +157,7 @@ namespace spl::metrics {
                 return;
             }
 
-            auto const iter = std::find_if(std::cbegin(values_), std::cend(values_),
+            auto const iter = std::find_if(std::begin(values_), std::end(values_),
                                            [&](auto&& value) { return (last - predicate_type{}(value)) < period_; });
             handler(std::begin(values_), iter);
             values_.erase(std::begin(values_), iter);

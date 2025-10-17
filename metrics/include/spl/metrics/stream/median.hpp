@@ -6,7 +6,7 @@
 
 #include <queue>
 #include <vector>
-#include <unordered_map>
+#include <unordered_set>
 #include <chrono>
 
 namespace spl::metrics::stream {
@@ -48,9 +48,14 @@ namespace spl::metrics::stream {
               template <typename...> class ContainerT = std::deque, //
               typename PredicateT                     = internal::timeline_predicate>
     struct median {
-        using container_type = spl::metrics::timeline<ObjectT, ContainerT, PredicateT>;
         using value_type     = spl::types::price;
         using timestamp_type = std::chrono::nanoseconds;
+
+        struct timestamp_hash {
+            std::size_t operator()(timestamp_type const& t) const noexcept {
+                return std::hash<typename timestamp_type::rep>{}(t.count());
+            }
+        };
 
         struct comparator_max {
             constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
@@ -69,9 +74,8 @@ namespace spl::metrics::stream {
 
         /**
          * @brief Construct a streaming median metric
-         * @param reference Reference to the timeline container
          */
-        constexpr explicit median(container_type& reference) noexcept : reference_{reference} {}
+        constexpr median() noexcept = default;
 
         /**
          * @brief Query the current median value
@@ -91,7 +95,7 @@ namespace spl::metrics::stream {
                 // Equal sizes: return average
                 auto const lower = max_heap_.top().price;
                 auto const upper = min_heap_.top().price;
-                return value_type{(lower.value + upper.value) / 2.0};
+                return value_type::from((static_cast<double>(lower) + static_cast<double>(upper)) / 2.0);
             }
         }
 
@@ -169,10 +173,9 @@ namespace spl::metrics::stream {
             }
         }
 
-        container_type& reference_;
-        max_heap_type max_heap_{};                                     ///< Lower half (max on top)
-        min_heap_type min_heap_{};                                     ///< Upper half (min on top)
-        std::unordered_multiset<timestamp_type> removed_timestamps_{}; ///< Lazy deletion tracking
+        mutable max_heap_type max_heap_{};                                                ///< Lower half (max on top)
+        mutable min_heap_type min_heap_{};                                                ///< Upper half (min on top)
+        mutable std::unordered_multiset<timestamp_type, timestamp_hash> removed_timestamps_{}; ///< Lazy deletion tracking
     };
 
 } // namespace spl::metrics::stream
