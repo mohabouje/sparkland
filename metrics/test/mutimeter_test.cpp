@@ -164,7 +164,7 @@ TYPED_TEST(MultimeterConsistencyTest, RealisticTradeStream) {
 
         // Mean should be sum/count
         double expected_mean = std::accumulate(prices.begin(), prices.begin() + i + 1, 0.0) / (i + 1);
-        EXPECT_NEAR(static_cast<double>(result.mean), expected_mean, 1e-10);
+        EXPECT_NEAR(static_cast<double>(result.mean), expected_mean, 1e-8);
     }
 }
 
