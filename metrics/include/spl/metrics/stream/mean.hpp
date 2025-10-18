@@ -30,7 +30,7 @@ namespace spl::metrics::stream {
 
         constexpr mean() noexcept = default;
 
-        [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
+        [[nodiscard]] constexpr auto operator()() const noexcept -> spl::types::price {
             return value_type::from(accumulated_ / static_cast<double>(count_));
         }
 

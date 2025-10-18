@@ -31,12 +31,6 @@ constexpr auto add(timeline_type& timeline, spl::types::price price, int64_t tim
 template <typename MinStreamT, typename MaxStreamT>
 static auto verify_against_scan(timeline_type const& timeline, MinStreamT const& min_stream,
                                 MaxStreamT const& max_stream) -> void {
-    if (timeline.empty()) {
-        EXPECT_FALSE(min_stream());
-        EXPECT_FALSE(max_stream());
-        return;
-    }
-
     auto min_scan = spl::metrics::scan::min<feeder::trade::trade_summary>{const_cast<timeline_type&>(timeline)};
     auto max_scan = spl::metrics::scan::max<feeder::trade::trade_summary>{const_cast<timeline_type&>(timeline)};
 
@@ -46,18 +40,11 @@ static auto verify_against_scan(timeline_type const& timeline, MinStreamT const&
     auto const min_result = min_stream();
     auto const max_result = max_stream();
 
-    ASSERT_TRUE(min_expected);
-    ASSERT_TRUE(max_expected);
-    ASSERT_TRUE(min_result);
-    ASSERT_TRUE(max_result);
+    EXPECT_EQ(min_result, min_expected) << "Min mismatch: stream returned " << static_cast<double>(min_result)
+                                        << ", scan returned " << static_cast<double>(min_expected);
 
-    EXPECT_EQ(min_result.value(), min_expected.value())
-        << "Min mismatch: stream returned " << static_cast<double>(min_result.value()) << ", scan returned "
-        << static_cast<double>(min_expected.value());
-
-    EXPECT_EQ(max_result.value(), max_expected.value())
-        << "Max mismatch: stream returned " << static_cast<double>(max_result.value()) << ", scan returned "
-        << static_cast<double>(max_expected.value());
+    EXPECT_EQ(max_result, max_expected) << "Max mismatch: stream returned " << static_cast<double>(max_result)
+                                        << ", scan returned " << static_cast<double>(max_expected);
 }
 
 TEST(MinMaxTest, SingleElement) {
@@ -70,10 +57,8 @@ TEST(MinMaxTest, SingleElement) {
     auto const min_result = min_stream();
     auto const max_result = max_stream();
 
-    ASSERT_TRUE(min_result);
-    ASSERT_TRUE(max_result);
-    EXPECT_EQ(min_result.value(), 100.0_p);
-    EXPECT_EQ(max_result.value(), 100.0_p);
+    EXPECT_EQ(min_result, 100.0_p);
+    EXPECT_EQ(max_result, 100.0_p);
 
     verify_against_scan(timeline, min_stream, max_stream);
 }
@@ -109,8 +94,8 @@ TEST(MinMaxTest, StrictlyAscendingSequencePopsAllPreviousForMax) {
     add(timeline, 130.0_p, 4'000'000'000, min_stream, max_stream);
     add(timeline, 140.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 140.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 140.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -125,8 +110,8 @@ TEST(MinMaxTest, StrictlyDescendingSequencePopsAllPreviousForMin) {
     add(timeline, 110.0_p, 4'000'000'000, min_stream, max_stream);
     add(timeline, 100.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 140.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 140.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -141,8 +126,8 @@ TEST(MinMaxTest, MountainPatternPreservesDequeInvariant) {
     add(timeline, 115.0_p, 4'000'000'000, min_stream, max_stream);
     add(timeline, 105.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 120.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 120.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -157,8 +142,8 @@ TEST(MinMaxTest, ValleyPatternPreservesDequeInvariant) {
     add(timeline, 105.0_p, 4'000'000'000, min_stream, max_stream);
     add(timeline, 115.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 120.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 120.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -171,8 +156,8 @@ TEST(MinMaxTest, DuplicatePricesIncrementCount) {
     add(timeline, 100.0_p, 2'000'000'000, min_stream, max_stream);
     add(timeline, 100.0_p, 3'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -187,8 +172,8 @@ TEST(MinMaxTest, DuplicatesAtDifferentPositions) {
     add(timeline, 110.0_p, 4'000'000'000, min_stream, max_stream);
     add(timeline, 105.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 110.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 110.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -202,12 +187,12 @@ TEST(MinMaxTest, NewMaximumPopsAllSmallerElements) {
     add(timeline, 95.0_p, 3'000'000'000, min_stream, max_stream);
     add(timeline, 85.0_p, 4'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
 
     add(timeline, 110.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 110.0_p);
-    EXPECT_EQ(min_stream().value(), 85.0_p);
+    EXPECT_EQ(max_stream(), 110.0_p);
+    EXPECT_EQ(min_stream(), 85.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -221,12 +206,12 @@ TEST(MinMaxTest, NewMinimumPopsAllLargerElements) {
     add(timeline, 105.0_p, 3'000'000'000, min_stream, max_stream);
     add(timeline, 115.0_p, 4'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
 
     add(timeline, 90.0_p, 5'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 115.0_p);
-    EXPECT_EQ(min_stream().value(), 90.0_p);
+    EXPECT_EQ(max_stream(), 115.0_p);
+    EXPECT_EQ(min_stream(), 90.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -239,7 +224,7 @@ TEST(MinMaxTest, RemovalOfMaximumUpdatesCorrectly) {
     add(timeline, 200.0_p, 2'000'000'000, min_stream, max_stream);
     add(timeline, 150.0_p, 3'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 200.0_p);
+    EXPECT_EQ(max_stream(), 200.0_p);
 
     auto const now = std::chrono::nanoseconds(5'000'000'000);
     timeline.flush(now, [&](auto begin, auto end) {
@@ -247,7 +232,7 @@ TEST(MinMaxTest, RemovalOfMaximumUpdatesCorrectly) {
         max_stream(begin, end);
     });
 
-    EXPECT_EQ(max_stream().value(), 150.0_p);
+    EXPECT_EQ(max_stream(), 150.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -260,7 +245,7 @@ TEST(MinMaxTest, RemovalOfMinimumUpdatesCorrectly) {
     add(timeline, 200.0_p, 2'000'000'000, min_stream, max_stream);
     add(timeline, 150.0_p, 3'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
 
     auto const now = std::chrono::nanoseconds(4'000'000'000);
     timeline.flush(now, [&](auto begin, auto end) {
@@ -268,7 +253,7 @@ TEST(MinMaxTest, RemovalOfMinimumUpdatesCorrectly) {
         max_stream(begin, end);
     });
 
-    EXPECT_EQ(min_stream().value(), 150.0_p);
+    EXPECT_EQ(min_stream(), 150.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -282,8 +267,8 @@ TEST(MinMaxTest, RemovalOfDuplicatesDecrementsCount) {
     add(timeline, 100.0_p, 3'000'000'000, min_stream, max_stream);
     add(timeline, 90.0_p, 4'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
-    EXPECT_EQ(min_stream().value(), 90.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
+    EXPECT_EQ(min_stream(), 90.0_p);
 
     auto now = std::chrono::nanoseconds(6'000'000'000);
     timeline.flush(now, [&](auto begin, auto end) {
@@ -291,7 +276,7 @@ TEST(MinMaxTest, RemovalOfDuplicatesDecrementsCount) {
         max_stream(begin, end);
     });
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
 
     now = std::chrono::nanoseconds(7'000'000'000);
     timeline.flush(now, [&](auto begin, auto end) {
@@ -299,7 +284,7 @@ TEST(MinMaxTest, RemovalOfDuplicatesDecrementsCount) {
         max_stream(begin, end);
     });
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
 
     now = std::chrono::nanoseconds(8'000'000'000);
     timeline.flush(now, [&](auto begin, auto end) {
@@ -307,7 +292,7 @@ TEST(MinMaxTest, RemovalOfDuplicatesDecrementsCount) {
         max_stream(begin, end);
     });
 
-    EXPECT_EQ(max_stream().value(), 90.0_p);
+    EXPECT_EQ(max_stream(), 90.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -359,8 +344,8 @@ TEST(MinMaxTest, AlternatingHighLowPattern) {
         max_stream(timeline.back());
     }
 
-    EXPECT_EQ(max_stream().value(), 200.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 200.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -383,8 +368,8 @@ TEST(MinMaxTest, SawtoothPatternAscending) {
         max_stream(timeline.back());
     }
 
-    EXPECT_EQ(max_stream().value(), 120.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 120.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -407,8 +392,8 @@ TEST(MinMaxTest, SawtoothPatternDescending) {
         max_stream(timeline.back());
     }
 
-    EXPECT_EQ(max_stream().value(), 120.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 120.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -423,8 +408,8 @@ TEST(MinMaxTest, AllSamePrice) {
         max_stream(timeline.back());
     }
 
-    EXPECT_EQ(max_stream().value(), 100.0_p);
-    EXPECT_EQ(min_stream().value(), 100.0_p);
+    EXPECT_EQ(max_stream(), 100.0_p);
+    EXPECT_EQ(min_stream(), 100.0_p);
     verify_against_scan(timeline, min_stream, max_stream);
 }
 
@@ -449,8 +434,8 @@ TEST(MinMaxTest, ExtremePriceRange) {
     add(timeline, 1000000.0_p, 2'000'000'000, min_stream, max_stream);
     add(timeline, 500.0_p, 3'000'000'000, min_stream, max_stream);
 
-    EXPECT_EQ(min_stream().value(), 0.01_p);
-    EXPECT_EQ(max_stream().value(), 1000000.0_p);
+    EXPECT_EQ(min_stream(), 0.01_p);
+    EXPECT_EQ(max_stream(), 1000000.0_p);
 
     verify_against_scan(timeline, min_stream, max_stream);
 }

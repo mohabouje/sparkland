@@ -1,7 +1,8 @@
 #pragma once
 
 #include "spl/types/price.hpp"
-#include "spl/types/timestamp.hpp"
+
+#include <chrono>
 
 namespace spl::metrics {
 
@@ -10,7 +11,7 @@ namespace spl::metrics {
         spl::types::price maximum;
         spl::types::price median;
         spl::types::price mean;
-        spl::types::timestamp timestamp;
+        std::chrono::nanoseconds timestamp;
     };
 
 } // namespace spl::metrics

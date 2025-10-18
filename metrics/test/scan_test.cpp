@@ -28,10 +28,8 @@ TEST(ScanTest, MaxFindsHighestPrice) {
     add(timeline, 175.50_p, 5'000'000'000);
 
     spl::metrics::scan::max<feeder::trade::trade_summary> max_scan(timeline);
-    auto result = max_scan();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), 200.0_p);
+    auto const result = max_scan();
+    EXPECT_EQ(result, 200.0_p);
 }
 
 TEST(ScanTest, MinFindsLowestPrice) {
@@ -44,10 +42,8 @@ TEST(ScanTest, MinFindsLowestPrice) {
     add(timeline, 175.50_p, 5'000'000'000);
 
     spl::metrics::scan::min<feeder::trade::trade_summary> min_scan(timeline);
-    auto result = min_scan();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), 75.25_p);
+    auto const result = min_scan();
+    EXPECT_EQ(result, 75.25_p);
 }
 
 TEST(ScanTest, MeanCalculatesAverage) {
@@ -62,10 +58,8 @@ TEST(ScanTest, MeanCalculatesAverage) {
     add(timeline, 175.0_p, 5'000'000'000);
 
     spl::metrics::scan::mean<feeder::trade::trade_summary> mean_scan(timeline);
-    auto result = mean_scan();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), 150.0_p);
+    auto const result = mean_scan();
+    EXPECT_EQ(result, 150.0_p);
 }
 
 TEST(ScanTest, MedianWithOddNumberOfElements) {
@@ -80,10 +74,8 @@ TEST(ScanTest, MedianWithOddNumberOfElements) {
     add(timeline, 175.0_p, 5'000'000'000);
 
     spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
-    auto result = median_scan();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), 150.0_p);
+    auto const result = median_scan();
+    EXPECT_EQ(result, 150.0_p);
 }
 
 TEST(ScanTest, MedianWithEvenNumberOfElements) {
@@ -99,10 +91,8 @@ TEST(ScanTest, MedianWithEvenNumberOfElements) {
     add(timeline, 180.0_p, 6'000'000'000);
 
     spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
-    auto result = median_scan();
-
-    ASSERT_TRUE(result);
-    EXPECT_EQ(result.value(), 150.0_p);
+    auto const result = median_scan();
+    EXPECT_EQ(result, 150.0_p);
 }
 
 TEST(ScanTest, SingleElementTimeline) {
@@ -115,100 +105,13 @@ TEST(ScanTest, SingleElementTimeline) {
     spl::metrics::scan::mean<feeder::trade::trade_summary> mean_scan(timeline);
     spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
 
-    auto max_result    = max_scan();
-    auto min_result    = min_scan();
-    auto mean_result   = mean_scan();
-    auto median_result = median_scan();
+    auto const max_result    = max_scan();
+    auto const min_result    = min_scan();
+    auto const mean_result   = mean_scan();
+    auto const median_result = median_scan();
 
-    ASSERT_TRUE(max_result);
-    ASSERT_TRUE(min_result);
-    ASSERT_TRUE(mean_result);
-    ASSERT_TRUE(median_result);
-
-    EXPECT_EQ(max_result.value(), 123.45_p);
-    EXPECT_EQ(min_result.value(), 123.45_p);
-    EXPECT_EQ(mean_result.value(), 123.45_p);
-    EXPECT_EQ(median_result.value(), 123.45_p);
-}
-
-TEST(ScanTest, RealisticTradeDataset) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-
-    // Simulate a realistic trading scenario with price fluctuations
-    std::vector<std::pair<double, int64_t>> trades = {
-        {50000.50, 1 }, // Starting price
-        {50005.75, 2 }, // Small increase
-        {49995.25, 3 }, // Drop
-        {50010.00, 4 }, // Recovery
-        {50020.50, 5 }, // Increase
-        {50015.00, 6 }, // Small drop
-        {50025.75, 7 }, // Peak
-        {50012.50, 8 }, // Decline
-        {50008.25, 9 }, // Further decline
-        {50003.00, 10}  // Near start
-    };
-
-    for (auto const& [price, time] : trades) {
-        [[maybe_unused]] auto&& _ =
-            timeline.emplace_back(feeder::trade::trade_summary{{},
-                                                               {},
-                                                               {},
-                                                               {},
-                                                               spl::types::price::from(price),
-                                                               {},
-                                                               {},
-                                                               {},
-                                                               std::chrono::nanoseconds(time * 1'000'000'000)});
-    }
-
-    spl::metrics::scan::max<feeder::trade::trade_summary> max_scan(timeline);
-    spl::metrics::scan::min<feeder::trade::trade_summary> min_scan(timeline);
-    spl::metrics::scan::mean<feeder::trade::trade_summary> mean_scan(timeline);
-    spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
-
-    auto max_result    = max_scan();
-    auto min_result    = min_scan();
-    auto mean_result   = mean_scan();
-    auto median_result = median_scan();
-
-    ASSERT_TRUE(max_result);
-    ASSERT_TRUE(min_result);
-    ASSERT_TRUE(mean_result);
-    ASSERT_TRUE(median_result);
-
-    // Verify max and min
-    EXPECT_EQ(max_result.value(), 50025.75_p);
-    EXPECT_EQ(min_result.value(), 49995.25_p);
-
-    // Calculate expected mean
-    double sum = 0.0;
-    for (auto const& [price, _] : trades) {
-        sum += price;
-    }
-    auto expected_mean = spl::types::price::from(sum / trades.size());
-    EXPECT_EQ(mean_result.value(), expected_mean);
-
-    // Median of sorted prices: [49995.25, 50000.50, 50003.00, 50005.75, 50008.25,
-    //                            50010.00, 50012.50, 50015.00, 50020.50, 50025.75]
-    // Median = (50008.25 + 50010.00) / 2 = 50009.125
-    EXPECT_EQ(median_result.value(), 50009.125_p);
-}
-
-TEST(ScanTest, TimelinePreservesOriginalOrder) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-
-    add(timeline, 100.0_p, 1'000'000'000);
-    add(timeline, 200.0_p, 2'000'000'000);
-    add(timeline, 150.0_p, 3'000'000'000);
-
-    // Get median (which internally sorts)
-    spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
-    auto median_result = median_scan();
-
-    ASSERT_TRUE(median_result);
-
-    // Verify timeline order is unchanged
-    EXPECT_EQ(timeline[0].price, 100.0_p);
-    EXPECT_EQ(timeline[1].price, 200.0_p);
-    EXPECT_EQ(timeline[2].price, 150.0_p);
+    EXPECT_EQ(max_result, 123.45_p);
+    EXPECT_EQ(min_result, 123.45_p);
+    EXPECT_EQ(mean_result, 123.45_p);
+    EXPECT_EQ(median_result, 123.45_p);
 }

@@ -13,30 +13,29 @@ namespace spl::metrics::scan {
               template <typename...> class ContainerT = std::deque, //
               typename PredicateT                     = internal::timeline_predicate>
     struct multimeter {
+        constexpr explicit multimeter(std::chrono::nanoseconds period = std::chrono::milliseconds{100}) noexcept :
+            timeline_{period}, median_{timeline_}, max_{timeline_}, min_{timeline_}, mean_{timeline_} {}
+
         template <typename InstanceT>
         requires std::is_same_v<std::decay_t<InstanceT>, ObjectT>
         [[nodiscard]] constexpr auto operator()(InstanceT&& instance) noexcept -> spl::metrics::metrics {
-            std::ignore          = timeline_.emplace_back(std::forward<InstanceT>(instance));
-            auto const median    = median_(timeline_);
-            auto const maximum   = max_(timeline_);
-            auto const minimum   = min_(timeline_);
-            auto const mean      = mean_(timeline_);
-            auto const timestamp = PredicateT{}(instance);
+            auto& reference      = timeline_.emplace_back(std::forward<InstanceT>(instance));
+            auto const timestamp = PredicateT{}(reference);
             return spl::metrics::metrics{
-                .minimum   = minimum.value(),
-                .maximum   = maximum.value(),
-                .median    = median.value(),
-                .mean      = mean.value(),
+                .minimum   = min_(),
+                .maximum   = max_(),
+                .median    = median_(),
+                .mean      = mean_(),
                 .timestamp = timestamp,
             };
         }
 
     private:
-        spl::metrics::timeline timeline_;
-        spl::metrics::scan::median median_;
-        spl::metrics::scan::max max_;
-        spl::metrics::scan::min min_;
-        spl::metrics::scan::mean mean_;
+        spl::metrics::timeline<ObjectT, ContainerT, PredicateT> timeline_;
+        spl::metrics::scan::median<ObjectT, ContainerT, PredicateT> median_;
+        spl::metrics::scan::max<ObjectT, ContainerT, PredicateT> max_;
+        spl::metrics::scan::min<ObjectT, ContainerT, PredicateT> min_;
+        spl::metrics::scan::mean<ObjectT, ContainerT, PredicateT> mean_;
     };
 
 } // namespace spl::metrics::scan

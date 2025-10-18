@@ -38,7 +38,7 @@ namespace spl::metrics::stream {
 
         constexpr min() noexcept = default;
 
-        [[nodiscard]] constexpr auto operator()() const noexcept -> result<value_type> {
+        [[nodiscard]] constexpr auto operator()() const noexcept -> spl::types::price {
             return monotonic_deque_.front().price;
         }
 

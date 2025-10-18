@@ -39,21 +39,16 @@ namespace spl::metrics::stream {
 
         constexpr median() noexcept = default;
 
-        [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
-            if (max_heap_.empty() && min_heap_.empty()) [[unlikely]] {
-                return spl::failure("Cannot compute median of an empty timeline");
-            }
-
+        [[nodiscard]] constexpr auto operator()() const noexcept -> spl::types::price {
             if (max_heap_.size() > min_heap_.size()) {
                 return max_heap_.top().price;
             } else if (max_heap_.size() < min_heap_.size()) {
                 return min_heap_.top().price;
-            } else {
-                // Equal sizes: return average
-                auto const lower = max_heap_.top().price;
-                auto const upper = min_heap_.top().price;
-                return value_type::from((static_cast<double>(lower) + static_cast<double>(upper)) / 2.0);
             }
+            // Equal sizes: return average
+            auto const lower = max_heap_.top().price;
+            auto const upper = min_heap_.top().price;
+            return value_type::from((static_cast<double>(lower) + static_cast<double>(upper)) / 2.0);
         }
 
         template <typename IteratorT>

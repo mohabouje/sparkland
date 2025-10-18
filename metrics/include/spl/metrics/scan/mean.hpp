@@ -15,7 +15,7 @@ namespace spl::metrics::scan {
 
         constexpr explicit mean(container_type& reference) noexcept : reference_{reference} {}
 
-        [[nodiscard]] constexpr auto operator()() const noexcept -> result<spl::types::price> {
+        [[nodiscard]] constexpr auto operator()() const noexcept -> spl::types::price {
             auto const accumulated =
                 std::accumulate(std::cbegin(reference_), std::cend(reference_), spl::types::price{},
                                 [](auto const& lhs, auto const& rhs) { return lhs + rhs.price; });
