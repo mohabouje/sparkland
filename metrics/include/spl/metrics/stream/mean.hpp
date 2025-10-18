@@ -19,7 +19,7 @@ namespace spl::metrics::stream {
      * @par Complexity
      * - Query: O(1)
      * - Update (insert): O(1)
-     * - Update (remove): O(k) where k is number of removed elements
+     * - Update (remove): O(1) where k is number of removed elements, amortized O(1)
      *
      */
     template <typename ObjectT,                                     //

@@ -3,10 +3,10 @@
 #include "spl/metrics/timeline.hpp"
 #include "spl/result/result.hpp"
 #include "spl/types/price.hpp"
+#include "spl/container/flat_unordered_set.hpp"
 
 #include <queue>
 #include <vector>
-#include <unordered_set>
 #include <chrono>
 
 namespace spl::metrics::stream {
@@ -144,7 +144,7 @@ namespace spl::metrics::stream {
 
         max_heap_type max_heap_{};
         min_heap_type min_heap_{};
-        std::unordered_set<ObjectT> removed_objects_{};
+        spl::container::flat_unordered_set<ObjectT> removed_objects_{};
     };
 
 } // namespace spl::metrics::stream

@@ -2,7 +2,7 @@ target("metrics")
     set_kind("headeronly")
     add_headerfiles("include/spl/metrics/*.hpp")
     add_includedirs("include", { public = true })
-    add_deps("result", "types", { public = true })
+    add_deps("result", "types", "container", { public = true })
 target_end()
 
 target("metrics-test")
