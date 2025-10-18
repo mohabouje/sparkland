@@ -28,13 +28,24 @@
 #include <iterator>
 #include <any>
 #include <cstdint>
+#include <chrono>
+#include <sstream>
+#include <string_view>
 
 namespace spl::exchange::coinbase::feeder {
 
     struct transformer {
-        // Parse ISO 8601 timestamp: "2022-10-19T23:28:22.061769Z"
-        [[nodiscard]] static auto parse_iso8601(std::string_view timestamp) noexcept -> std::chrono::nanoseconds {
-            return std::chrono::system_clock::time_point::duration{};
+        [[nodiscard]] static auto parse_iso8601(std::string_view s) noexcept -> std::chrono::nanoseconds {
+            std::chrono::sys_time<std::chrono::nanoseconds> tp{};
+            std::istringstream is{std::string{s}};
+            is >> std::chrono::parse("%Y-%m-%dT%H:%M:%S.%fZ", tp);
+            if (is.fail()) [[unlikely]] {
+                is.clear();
+                is.str(std::string{s});
+                is >> std::chrono::parse("%Y-%m-%dT%H:%M:%SZ", tp);
+            }
+
+            return is.fail() ? std::chrono::nanoseconds{0} : tp.time_since_epoch();
         }
 
         [[nodiscard]] constexpr auto to_channel(spl::protocol::feeder::stream::channel type,

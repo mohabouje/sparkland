@@ -2,6 +2,6 @@
 
 namespace spl::exchange {
 
-    enum class exchange_id { bybit };
+    enum class exchange_id { bybit, coinbase };
 
 }

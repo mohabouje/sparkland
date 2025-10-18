@@ -27,7 +27,7 @@ namespace spl::metrics::stream {
      * @par Complexity
      * - Query: O(1) - returns median from heap tops
      * - Insert: O(log N) amortized - heap push + rebalance + cleanup
-     * - Remove: O(1) average - hash set insertion, O(log N) amortized for cleanup
+     * - Remove: O(1) average - hash set insertion, O(log N) amortized for cleanup (per element)
      *
      */
     template <typename ObjectT,                                     //
