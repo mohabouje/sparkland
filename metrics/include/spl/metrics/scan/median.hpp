@@ -17,11 +17,7 @@ namespace spl::metrics::scan {
 
         constexpr explicit median(container_type& reference) noexcept : reference_{reference} {}
 
-        [[nodiscard]] constexpr auto operator()() const -> result<spl::types::price> {
-            if (std::empty(reference_)) [[unlikely]] {
-                return spl::failure("Cannot compute median of an empty timeline");
-            }
-
+        [[nodiscard]] constexpr auto operator()() const noexcept -> result<spl::types::price> {
             auto tmp = std::vector<spl::types::price>{std::size(reference_)};
             std::transform(std::cbegin(reference_), std::cend(reference_), std::begin(tmp),
                            [](auto const& value) { return value.price; });

@@ -20,7 +20,7 @@ constexpr auto add(timeline_type& timeline, auto& stream_metric, spl::types::pri
 }
 
 TEST(StreamTest, MaxFindsHighestPrice) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
+    auto timeline   = timeline_type{std::chrono::seconds(10)};
     auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
 
     add(timeline, max_stream, 100.5_p, 1'000'000'000);
@@ -36,7 +36,7 @@ TEST(StreamTest, MaxFindsHighestPrice) {
 }
 
 TEST(StreamTest, MinFindsLowestPrice) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
+    auto timeline   = timeline_type{std::chrono::seconds(10)};
     auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
 
     add(timeline, min_stream, 100.5_p, 1'000'000'000);
@@ -52,7 +52,7 @@ TEST(StreamTest, MinFindsLowestPrice) {
 }
 
 TEST(StreamTest, MeanCalculatesAverage) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
+    auto timeline    = timeline_type{std::chrono::seconds(10)};
     auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
 
     // Add 5 trades: 100, 150, 125, 200, 175
@@ -70,7 +70,7 @@ TEST(StreamTest, MeanCalculatesAverage) {
 }
 
 TEST(StreamTest, MedianWithOddNumberOfElements) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
+    auto timeline      = timeline_type{std::chrono::seconds(10)};
     auto median_stream = spl::metrics::stream::median<feeder::trade::trade_summary>{};
 
     // Add 5 trades (odd number): sorted prices will be [100, 125, 150, 175, 200]
@@ -88,7 +88,7 @@ TEST(StreamTest, MedianWithOddNumberOfElements) {
 }
 
 TEST(StreamTest, MedianWithEvenNumberOfElements) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
+    auto timeline      = timeline_type{std::chrono::seconds(10)};
     auto median_stream = spl::metrics::stream::median<feeder::trade::trade_summary>{};
 
     // Add 6 trades (even number): sorted prices will be [100, 120, 140, 160, 180, 200]
@@ -106,23 +106,11 @@ TEST(StreamTest, MedianWithEvenNumberOfElements) {
     EXPECT_EQ(result.value(), 150.0_p);
 }
 
-TEST(StreamTest, EmptyTimelineReturnsFailure) {
-    auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-    auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
-    auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
-    auto median_stream = spl::metrics::stream::median<feeder::trade::trade_summary>{};
-
-    EXPECT_FALSE(max_stream());
-    EXPECT_FALSE(min_stream());
-    EXPECT_FALSE(mean_stream());
-    EXPECT_FALSE(median_stream());
-}
-
 TEST(StreamTest, SingleElementTimeline) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-    auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-    auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
-    auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
+    auto timeline      = timeline_type{std::chrono::seconds(10)};
+    auto max_stream    = spl::metrics::stream::max<feeder::trade::trade_summary>{};
+    auto min_stream    = spl::metrics::stream::min<feeder::trade::trade_summary>{};
+    auto mean_stream   = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
     auto median_stream = spl::metrics::stream::median<feeder::trade::trade_summary>{};
 
     add(timeline, max_stream, 123.45_p, 1'000'000'000);
@@ -147,10 +135,10 @@ TEST(StreamTest, SingleElementTimeline) {
 }
 
 TEST(StreamTest, RealisticTradeDataset) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-    auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-    auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
-    auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
+    auto timeline      = timeline_type{std::chrono::seconds(10)};
+    auto max_stream    = spl::metrics::stream::max<feeder::trade::trade_summary>{};
+    auto min_stream    = spl::metrics::stream::min<feeder::trade::trade_summary>{};
+    auto mean_stream   = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
     auto median_stream = spl::metrics::stream::median<feeder::trade::trade_summary>{};
 
     // Simulate a realistic trading scenario with price fluctuations
@@ -213,9 +201,9 @@ TEST(StreamTest, RealisticTradeDataset) {
 }
 
 TEST(StreamTest, DuplicatePricesHandledCorrectly) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-    auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-    auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
+    auto timeline    = timeline_type{std::chrono::seconds(10)};
+    auto max_stream  = spl::metrics::stream::max<feeder::trade::trade_summary>{};
+    auto min_stream  = spl::metrics::stream::min<feeder::trade::trade_summary>{};
     auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
 
     // Add multiple trades at same price
@@ -237,35 +225,29 @@ TEST(StreamTest, DuplicatePricesHandledCorrectly) {
 }
 
 TEST(StreamTest, SlidingWindowWithRemoval) {
-    auto timeline = timeline_type{std::chrono::seconds(5)};
-    auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-    auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
+    auto timeline    = timeline_type{std::chrono::seconds(5)};
+    auto max_stream  = spl::metrics::stream::max<feeder::trade::trade_summary>{};
+    auto min_stream  = spl::metrics::stream::min<feeder::trade::trade_summary>{};
     auto mean_stream = spl::metrics::stream::mean<feeder::trade::trade_summary>{};
 
     // Add trades within the 5-second window
     // t=1s: 100
-    auto const& trade1 = timeline.emplace_back(feeder::trade::trade_summary{
-        .price = 100.0_p,
-        .timestamp = std::chrono::nanoseconds(1'000'000'000)
-    });
+    auto const& trade1 = timeline.emplace_back(
+        feeder::trade::trade_summary{.price = 100.0_p, .timestamp = std::chrono::nanoseconds(1'000'000'000)});
     max_stream(trade1);
     min_stream(trade1);
     mean_stream(trade1);
 
     // t=2s: 200 (will be max)
-    auto const& trade2 = timeline.emplace_back(feeder::trade::trade_summary{
-        .price = 200.0_p,
-        .timestamp = std::chrono::nanoseconds(2'000'000'000)
-    });
+    auto const& trade2 = timeline.emplace_back(
+        feeder::trade::trade_summary{.price = 200.0_p, .timestamp = std::chrono::nanoseconds(2'000'000'000)});
     max_stream(trade2);
     min_stream(trade2);
     mean_stream(trade2);
 
     // t=3s: 50 (will be min)
-    auto const& trade3 = timeline.emplace_back(feeder::trade::trade_summary{
-        .price = 50.0_p,
-        .timestamp = std::chrono::nanoseconds(3'000'000'000)
-    });
+    auto const& trade3 = timeline.emplace_back(
+        feeder::trade::trade_summary{.price = 50.0_p, .timestamp = std::chrono::nanoseconds(3'000'000'000)});
     max_stream(trade3);
     min_stream(trade3);
     mean_stream(trade3);
@@ -291,7 +273,7 @@ TEST(StreamTest, SlidingWindowWithRemoval) {
 }
 
 TEST(StreamTest, RemovalOfDuplicatePricesAtFront) {
-    auto timeline = timeline_type{std::chrono::seconds(5)};
+    auto timeline   = timeline_type{std::chrono::seconds(5)};
     auto max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
     auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
 

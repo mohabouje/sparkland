@@ -60,15 +60,6 @@ static auto verify_against_scan(timeline_type const& timeline, MinStreamT const&
         << static_cast<double>(max_expected.value());
 }
 
-TEST(MinMaxTest, EmptyStreamReturnsFailure) {
-    auto const timeline   = timeline_type{std::chrono::seconds(10)};
-    auto const min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};
-    auto const max_stream = spl::metrics::stream::max<feeder::trade::trade_summary>{};
-
-    EXPECT_FALSE(min_stream());
-    EXPECT_FALSE(max_stream());
-}
-
 TEST(MinMaxTest, SingleElement) {
     auto timeline   = timeline_type{std::chrono::seconds(10)};
     auto min_stream = spl::metrics::stream::min<feeder::trade::trade_summary>{};

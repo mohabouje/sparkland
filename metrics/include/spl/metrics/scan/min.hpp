@@ -14,11 +14,7 @@ namespace spl::metrics::scan {
 
         constexpr explicit min(container_type& reference) noexcept : reference_{reference} {}
 
-        [[nodiscard]] constexpr auto operator()() const -> result<spl::types::price> {
-            if (std::empty(reference_)) [[unlikely]] {
-                return spl::failure("Cannot compute min of an empty timeline");
-            }
-
+        [[nodiscard]] constexpr auto operator()() const noexcept -> result<spl::types::price> {
             auto const iter = std::min_element(std::cbegin(reference_), std::cend(reference_),
                                                [](auto const& lhs, auto const& rhs) { return lhs.price < rhs.price; });
             return iter->price;

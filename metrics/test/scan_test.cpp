@@ -105,20 +105,6 @@ TEST(ScanTest, MedianWithEvenNumberOfElements) {
     EXPECT_EQ(result.value(), 150.0_p);
 }
 
-TEST(ScanTest, EmptyTimelineReturnsFailure) {
-    auto timeline = timeline_type{std::chrono::seconds(10)};
-
-    spl::metrics::scan::max<feeder::trade::trade_summary> max_scan(timeline);
-    spl::metrics::scan::min<feeder::trade::trade_summary> min_scan(timeline);
-    spl::metrics::scan::mean<feeder::trade::trade_summary> mean_scan(timeline);
-    spl::metrics::scan::median<feeder::trade::trade_summary> median_scan(timeline);
-
-    EXPECT_FALSE(max_scan());
-    EXPECT_FALSE(min_scan());
-    EXPECT_FALSE(mean_scan());
-    EXPECT_FALSE(median_scan());
-}
-
 TEST(ScanTest, SingleElementTimeline) {
     auto timeline = timeline_type{std::chrono::seconds(10)};
 

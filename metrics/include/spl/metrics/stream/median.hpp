@@ -77,12 +77,7 @@ namespace spl::metrics::stream {
          */
         constexpr median() noexcept = default;
 
-        /**
-         * @brief Query the current median value
-         * @return The median price (or average of two middle values), or error if empty
-         * @complexity O(1)
-         */
-        [[nodiscard]] auto operator()() const -> result<value_type> {
+        [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
             if (max_heap_.empty() && min_heap_.empty()) [[unlikely]] {
                 return spl::failure("Cannot compute median of an empty timeline");
             }
@@ -99,29 +94,17 @@ namespace spl::metrics::stream {
             }
         }
 
-        /**
-         * @brief Update metric when elements are removed from timeline
-         * @param begin Iterator to first removed element
-         * @param end Iterator past last removed element
-         * @complexity O(k log N) where k is number of removed elements (lazy deletion with cleanup)
-         */
         template <typename IteratorT>
-        auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
+        constexpr auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
             for (auto it = begin; it != end; ++it) {
                 auto const timestamp = PredicateT{}(*it);
                 removed_timestamps_.insert(timestamp);
             }
 
-            // Lazy deletion: clean up heap tops if they're marked for removal
             cleanup_heaps();
         }
 
-        /**
-         * @brief Update metric when a new element is inserted
-         * @param value The newly inserted object
-         * @complexity O(log N) - heap insertion and rebalancing
-         */
-        auto operator()(ObjectT const& value) noexcept -> void {
+        constexpr auto operator()(ObjectT const& value) noexcept -> void {
             if (max_heap_.empty() || value.price <= max_heap_.top().price) {
                 max_heap_.push(value);
             } else {
@@ -137,7 +120,7 @@ namespace spl::metrics::stream {
          * @brief Remove lazy-deleted elements from heap tops
          * @complexity O(log N) per removed element
          */
-        auto cleanup_heaps() noexcept -> void {
+        constexpr auto cleanup_heaps() noexcept -> void {
             while (!max_heap_.empty()) {
                 auto const timestamp = PredicateT{}(max_heap_.top());
                 if (removed_timestamps_.count(timestamp)) {
@@ -163,7 +146,7 @@ namespace spl::metrics::stream {
          * @brief Maintain heap size balance (sizes differ by at most 1)
          * @complexity O(log N)
          */
-        auto rebalance() noexcept -> void {
+        constexpr auto rebalance() noexcept -> void {
             if (max_heap_.size() > min_heap_.size() + 1) {
                 min_heap_.push(max_heap_.top());
                 max_heap_.pop();
@@ -173,9 +156,9 @@ namespace spl::metrics::stream {
             }
         }
 
-        mutable max_heap_type max_heap_{};                                                ///< Lower half (max on top)
-        mutable min_heap_type min_heap_{};                                                ///< Upper half (min on top)
-        mutable std::unordered_multiset<timestamp_type, timestamp_hash> removed_timestamps_{}; ///< Lazy deletion tracking
+        mutable max_heap_type max_heap_{}; ///< Lower half (max on top)
+        mutable min_heap_type min_heap_{}; ///< Upper half (min on top)
+        mutable std::unordered_multiset<timestamp_type, timestamp_hash> removed_timestamps_{};
     };
 
 } // namespace spl::metrics::stream
