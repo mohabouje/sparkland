@@ -26,23 +26,6 @@ namespace spl::metrics::stream {
      * - Update (insert): O(log N)
      * - Update (remove): O(k log N) where k is number of removed elements (amortized)
      *
-     * @par Example
-     * @code
-     * spl::metrics::timeline<Trade> timeline{std::chrono::seconds(60)};
-     * auto median_metric = spl::metrics::stream::median<Trade>{timeline};
-     *
-     * // Insert new element
-     * timeline.emplace_back(trade);
-     * median_metric(trade);
-     *
-     * // Remove old elements
-     * timeline.flush(now, [&](auto begin, auto end) {
-     *     median_metric(begin, end);
-     * });
-     *
-     * // Query median
-     * auto median_price = median_metric();
-     * @endcode
      */
     template <typename ObjectT,                                     //
               template <typename...> class ContainerT = std::deque, //
@@ -51,30 +34,6 @@ namespace spl::metrics::stream {
         using value_type     = spl::types::price;
         using timestamp_type = std::chrono::nanoseconds;
 
-        struct timestamp_hash {
-            std::size_t operator()(timestamp_type const& t) const noexcept {
-                return std::hash<typename timestamp_type::rep>{}(t.count());
-            }
-        };
-
-        struct comparator_max {
-            constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
-                return a.price < b.price; // Max-heap: larger prices on top
-            }
-        };
-
-        struct comparator_min {
-            constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
-                return a.price > b.price; // Min-heap: smaller prices on top
-            }
-        };
-
-        using max_heap_type = std::priority_queue<ObjectT, std::vector<ObjectT>, comparator_max>;
-        using min_heap_type = std::priority_queue<ObjectT, std::vector<ObjectT>, comparator_min>;
-
-        /**
-         * @brief Construct a streaming median metric
-         */
         constexpr median() noexcept = default;
 
         [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
@@ -97,8 +56,7 @@ namespace spl::metrics::stream {
         template <typename IteratorT>
         constexpr auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
             for (auto it = begin; it != end; ++it) {
-                auto const timestamp = PredicateT{}(*it);
-                removed_timestamps_.insert(timestamp);
+                removed_objects_.insert(*it);
             }
 
             cleanup_heaps();
@@ -122,20 +80,18 @@ namespace spl::metrics::stream {
          */
         constexpr auto cleanup_heaps() noexcept -> void {
             while (!max_heap_.empty()) {
-                auto const timestamp = PredicateT{}(max_heap_.top());
-                if (removed_timestamps_.count(timestamp)) {
+                if (removed_objects_.count(max_heap_.top())) {
+                    removed_objects_.erase(max_heap_.top());
                     max_heap_.pop();
-                    removed_timestamps_.erase(timestamp);
                 } else {
                     break;
                 }
             }
 
             while (!min_heap_.empty()) {
-                auto const timestamp = PredicateT{}(min_heap_.top());
-                if (removed_timestamps_.count(timestamp)) {
+                if (removed_objects_.count(min_heap_.top())) {
+                    removed_objects_.erase(min_heap_.top());
                     min_heap_.pop();
-                    removed_timestamps_.erase(timestamp);
                 } else {
                     break;
                 }
@@ -156,9 +112,30 @@ namespace spl::metrics::stream {
             }
         }
 
-        mutable max_heap_type max_heap_{}; ///< Lower half (max on top)
-        mutable min_heap_type min_heap_{}; ///< Upper half (min on top)
-        mutable std::unordered_multiset<timestamp_type, timestamp_hash> removed_timestamps_{};
+        struct comparator_max {
+            [[nodiscard]] constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
+                if (a.price == b.price) [[unlikely]] {
+                    return a.timestamp > b.timestamp;
+                }
+                return a.price < b.price;
+            }
+        };
+
+        struct comparator_min {
+            [[nodiscard]] constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
+                if (a.price == b.price) [[unlikely]] {
+                    return a.timestamp > b.timestamp;
+                }
+                return a.price > b.price;
+            }
+        };
+
+        using max_heap_type = std::priority_queue<ObjectT, std::vector<ObjectT>, comparator_max>;
+        using min_heap_type = std::priority_queue<ObjectT, std::vector<ObjectT>, comparator_min>;
+
+        max_heap_type max_heap_{};
+        min_heap_type min_heap_{};
+        std::unordered_multiset<ObjectT> removed_objects_{};
     };
 
 } // namespace spl::metrics::stream
