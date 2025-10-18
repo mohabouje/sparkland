@@ -24,23 +24,6 @@ namespace spl::metrics::stream {
      * - Update (insert): O(1) amortized
      * - Update (remove): O(k) where k is number of removed elements, amortized O(1)
      *
-     * @par Example
-     * @code
-     * spl::metrics::timeline<Trade> timeline{std::chrono::seconds(60)};
-     * auto max_metric = spl::metrics::stream::max<Trade>{timeline};
-     *
-     * // Insert new element
-     * timeline.emplace_back(trade);
-     * max_metric(trade);
-     *
-     * // Remove old elements
-     * timeline.flush(now, [&](auto begin, auto end) {
-     *     max_metric(begin, end);
-     * });
-     *
-     * // Query maximum
-     * auto max_price = max_metric();
-     * @endcode
      */
     template <typename ObjectT,                                     //
               template <typename...> class ContainerT = std::deque, //
@@ -53,75 +36,48 @@ namespace spl::metrics::stream {
             std::size_t count;
         };
 
-        /**
-         * @brief Construct a streaming maximum metric
-         */
         constexpr max() noexcept = default;
 
-        /**
-         * @brief Query the current maximum value
-         * @return The maximum price in the current window, or error if empty
-         * @complexity O(1)
-         */
-        [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
-            if (std::empty(monotonic_deque_)) [[unlikely]] {
-                return spl::failure("Cannot compute max of an empty timeline");
-            }
+        [[nodiscard]] constexpr auto operator()() noexcept const -> result<value_type> {
             return monotonic_deque_.front().price;
         }
 
-        /**
-         * @brief Update metric when elements are removed from timeline
-         * @param begin Iterator to first removed element
-         * @param end Iterator past last removed element
-         * @complexity O(k) amortized, where k is number of removed elements
-         */
         template <typename IteratorT>
         constexpr auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
-            // Sliding window: elements leave from the front (oldest first)
-            // Only decrement count if the removed price matches the current maximum
             for (auto it = begin; it != end; ++it) {
                 if (std::empty(monotonic_deque_)) [[unlikely]] {
-                    break;
+                    return;
                 }
 
                 auto const price = it->price;
-
-                // Only touch front if this removal affects current maximum
-                if (monotonic_deque_.front().price == price) {
-                    --monotonic_deque_.front().count;
-
-                    // Clean up zero-count entries from front
-                    while (!std::empty(monotonic_deque_) && monotonic_deque_.front().count == 0) {
-                        monotonic_deque_.pop_front();
-                    }
+                auto& front      = monotonic_deque_.front();
+                if (front.price == price) {
+                    --front.count;
+                    clean();
                 }
             }
         }
 
-        /**
-         * @brief Update metric when a new element is inserted
-         * @param value The newly inserted object
-         * @complexity O(1) amortized - maintains monotonic decreasing property
-         */
         constexpr auto operator()(ObjectT const& value) noexcept -> void {
             auto const price = value.price;
-
-            // Check if same price already exists at back
-            if (!std::empty(monotonic_deque_) && monotonic_deque_.back().price == price) {
+            if (not std::empty(monotonic_deque_) and monotonic_deque_.back().price == price) {
                 ++monotonic_deque_.back().count;
                 return;
             }
 
-            // Remove elements from back that are <= new price (they can't be future maximums)
-            while (!std::empty(monotonic_deque_) && monotonic_deque_.back().price <= price) {
+            while (not std::empty(monotonic_deque_) and monotonic_deque_.back().price <= price) {
                 monotonic_deque_.pop_back();
             }
-
             monotonic_deque_.push_back({price, 1});
         }
 
     private:
+        constexpr auto clean() noexcept -> void {
+            while (not std::empty(monotonic_deque_) and monotonic_deque_.front().count == 0) {
+                monotonic_deque_.pop_front();
+            }
+        }
+
         std::deque<entry> monotonic_deque_{}; ///< Monotonic deque of {price, count} in decreasing price order
     };
 

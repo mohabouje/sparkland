@@ -21,23 +21,6 @@ namespace spl::metrics::stream {
      * - Update (insert): O(1)
      * - Update (remove): O(k) where k is number of removed elements
      *
-     * @par Example
-     * @code
-     * spl::metrics::timeline<Trade> timeline{std::chrono::seconds(60)};
-     * auto mean_metric = spl::metrics::stream::mean<Trade>{timeline};
-     *
-     * // Insert new element
-     * timeline.emplace_back(trade);
-     * mean_metric(trade);
-     *
-     * // Remove old elements
-     * timeline.flush(now, [&](auto begin, auto end) {
-     *     mean_metric(begin, end);
-     * });
-     *
-     * // Query mean
-     * auto avg_price = mean_metric();
-     * @endcode
      */
     template <typename ObjectT,                                     //
               template <typename...> class ContainerT = std::deque, //
@@ -45,29 +28,12 @@ namespace spl::metrics::stream {
     struct mean {
         using value_type = spl::types::price;
 
-        /**
-         * @brief Construct a streaming mean metric
-         */
         constexpr mean() noexcept = default;
 
-        /**
-         * @brief Query the current mean value
-         * @return The arithmetic mean of all prices, or error if empty
-         * @complexity O(1)
-         */
         [[nodiscard]] constexpr auto operator()() const -> result<value_type> {
-            if (count_ == 0) [[unlikely]] {
-                return spl::failure("Cannot compute mean of an empty timeline");
-            }
             return value_type::from(accumulated_ / static_cast<double>(count_));
         }
 
-        /**
-         * @brief Update metric when elements are removed from timeline
-         * @param begin Iterator to first removed element
-         * @param end Iterator past last removed element
-         * @complexity O(k) where k is number of removed elements
-         */
         template <typename IteratorT>
         constexpr auto operator()(IteratorT begin, IteratorT end) noexcept -> void {
             for (auto it = begin; it != end; ++it) {
@@ -76,11 +42,6 @@ namespace spl::metrics::stream {
             }
         }
 
-        /**
-         * @brief Update metric when a new element is inserted
-         * @param value The newly inserted object
-         * @complexity O(1)
-         */
         constexpr auto operator()(ObjectT const& value) noexcept -> void {
             accumulated_ += static_cast<double>(value.price);
             ++count_;
