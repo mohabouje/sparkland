@@ -15,16 +15,19 @@ namespace spl::metrics::stream {
      * @brief O(log N) streaming median using dual heaps with lazy deletion
      *
      * Maintains two heaps: max-heap for lower half, min-heap for upper half.
-     * Uses lazy deletion to handle element removal efficiently.
+     * Uses lazy deletion to handle element removal efficiently by storing removed
+     * objects in an unordered_set and cleaning them up when they reach heap tops.
      *
-     * @tparam ObjectT The object type stored in the timeline (must have .price and timestamp)
+     * @tparam ObjectT The object type stored in the timeline
+     *                 Requirements: .price, .timestamp, .sequence fields
+     *                 Must be hashable (std::hash<ObjectT>) and equality comparable
      * @tparam ContainerT The underlying container type for the timeline
      * @tparam PredicateT Predicate to extract timestamp from ObjectT
      *
      * @par Complexity
-     * - Query: O(1)
-     * - Update (insert): O(log N)
-     * - Update (remove): O(k log N) where k is number of removed elements (amortized)
+     * - Query: O(1) - returns median from heap tops
+     * - Insert: O(log N) amortized - heap push + rebalance + cleanup
+     * - Remove: O(1) average - hash set insertion, O(log N) amortized for cleanup
      *
      */
     template <typename ObjectT,                                     //
@@ -115,6 +118,9 @@ namespace spl::metrics::stream {
         struct comparator_max {
             [[nodiscard]] constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
                 if (a.price == b.price) [[unlikely]] {
+                    if (a.timestamp == b.timestamp) [[unlikely]] {
+                        return a.sequence > b.sequence;
+                    }
                     return a.timestamp > b.timestamp;
                 }
                 return a.price < b.price;
@@ -124,6 +130,9 @@ namespace spl::metrics::stream {
         struct comparator_min {
             [[nodiscard]] constexpr auto operator()(ObjectT const& a, ObjectT const& b) const noexcept -> bool {
                 if (a.price == b.price) [[unlikely]] {
+                    if (a.timestamp == b.timestamp) [[unlikely]] {
+                        return a.sequence > b.sequence;
+                    }
                     return a.timestamp > b.timestamp;
                 }
                 return a.price > b.price;
@@ -135,7 +144,7 @@ namespace spl::metrics::stream {
 
         max_heap_type max_heap_{};
         min_heap_type min_heap_{};
-        std::unordered_multiset<ObjectT> removed_objects_{};
+        std::unordered_set<ObjectT> removed_objects_{};
     };
 
 } // namespace spl::metrics::stream
