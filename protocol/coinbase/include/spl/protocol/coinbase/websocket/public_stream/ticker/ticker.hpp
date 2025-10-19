@@ -10,21 +10,21 @@ namespace spl::protocol::coinbase::websocket::public_stream::ticker {
 
     struct ticker {
         std::int64_t sequence;
-        std::string product_id;
-        std::string price;
-        std::string open_24h;
-        std::string volume_24h;
-        std::string low_24h;
-        std::string high_24h;
-        std::string volume_30d;
-        std::string best_bid;
-        std::string best_bid_size;
-        std::string best_ask;
-        std::string best_ask_size;
-        std::string side;
-        std::string time;
+        std::string_view product_id;
+        std::string_view price;
+        std::string_view open_24h;
+        std::string_view volume_24h;
+        std::string_view low_24h;
+        std::string_view high_24h;
+        std::string_view volume_30d;
+        std::string_view best_bid;
+        std::string_view best_bid_size;
+        std::string_view best_ask;
+        std::string_view best_ask_size;
+        std::string_view side;
+        std::string_view time;
         std::int64_t trade_id;
-        std::string last_size;
+        std::string_view last_size;
     };
 
 } // namespace spl::protocol::coinbase::websocket::public_stream::ticker

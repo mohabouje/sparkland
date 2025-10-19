@@ -20,8 +20,8 @@ namespace spl::protocol::bybit::websocket::public_stream::trade {
     };
 
     struct trade {
-        std::string topic;
-        std::string type;
+        std::string_view topic;
+        std::string_view type;
         std::int64_t ts;
         std::vector<spl::protocol::bybit::websocket::public_stream::trade::data> data;
     };
