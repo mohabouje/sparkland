@@ -1,0 +1,7 @@
+target("metrics-capture")
+    set_kind("binary")
+    set_group("apps")
+    add_files("src/main.cpp")
+    add_deps("exchange-factory", "metrics", "logger", "protocol-feeder")
+    add_packages("cli11")
+target_end()

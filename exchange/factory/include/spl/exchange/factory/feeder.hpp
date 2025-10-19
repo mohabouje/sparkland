@@ -3,6 +3,7 @@
 #include "spl/components/feeder/codegen.hpp"
 #include "spl/protocol/common/exchange_id.hpp"
 #include "spl/exchange/bybit/feeder/contract.hpp"
+#include "spl/exchange/coinbase/feeder/contract.hpp"
 #include "spl/meta/map.hpp"
 #include "spl/meta/list.hpp"
 
@@ -13,7 +14,9 @@ namespace spl::exchange::factory {
         template <spl::exchange::common::environment EnvironmentV>
         using lookup = spl::meta::map< //
             spl::meta::vpair<spl::protocol::common::exchange_id::bybit,
-                             spl::exchange::bybit::feeder::contract<EnvironmentV>>>;
+                             spl::exchange::bybit::feeder::contract<EnvironmentV>>,
+            spl::meta::vpair<spl::protocol::common::exchange_id::coinbase,
+                             spl::exchange::coinbase::feeder::contract<EnvironmentV>>>;
 
         template <spl::protocol::common::exchange_id ExchangeIdV, //
                   spl::exchange::common::environment EnvironmentV = spl::exchange::common::environment::production>

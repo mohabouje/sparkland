@@ -1,6 +1,6 @@
 target("exchange-factory")
     set_kind("headeronly")
-    add_headerfiles("include/spl/exchange/factory/**/*.hpp")
+    add_headerfiles("include/spl/exchange/factory/*.hpp")
     add_includedirs("include", {public = true})
-    add_deps("exchange-bybit", {public = true})
+    add_deps("exchange-bybit", "exchange-coinbase", {public = true})
 target_end()

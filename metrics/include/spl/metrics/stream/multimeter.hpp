@@ -13,8 +13,9 @@ namespace spl::metrics::stream {
               template <typename...> class ContainerT = std::deque, //
               typename PredicateT                     = internal::timeline_predicate>
     struct multimeter {
-        constexpr explicit multimeter(std::chrono::nanoseconds period = std::chrono::milliseconds{100}) noexcept :
-            timeline_{period} {}
+        template <typename... ArgsT>
+        constexpr explicit multimeter(ArgsT&&... args) noexcept :
+            timeline_{std::forward<ArgsT>(args)...} {}
 
         template <typename InstanceT>
         requires std::is_same_v<std::decay_t<InstanceT>, ObjectT>
