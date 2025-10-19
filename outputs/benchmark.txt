@@ -1,0 +1,35 @@
+[0m[38;2;0;255;0;1m[ 12%]:[0m cache compiling.release metrics/benchmark/multimeter_benchmark.cpp[0m
+[0m[38;2;0;255;0;1m[ 82%]:[0m [38;2;255;0;255;1mlinking.release metrics-benchmark[0m
+---------------------------------------------------------------------------------------
+Benchmark                             Time             CPU   Iterations UserCounters...
+---------------------------------------------------------------------------------------
+BM_ScanMultimeter/1/1               710 us          710 us          949 events_per_sec=1 items_per_second=28.1807M/s window_size_sec=1
+BM_ScanMultimeter/1/10             2466 us         2466 us          284 events_per_sec=1 items_per_second=8.1117M/s window_size_sec=10
+BM_ScanMultimeter/1/60            10072 us        10072 us           70 events_per_sec=1 items_per_second=1.98572M/s window_size_sec=60
+BM_ScanMultimeter/1/180           25055 us        25053 us           28 events_per_sec=1 items_per_second=798.315k/s window_size_sec=180
+BM_ScanMultimeter/1/300           40627 us        40626 us           17 events_per_sec=1 items_per_second=492.295k/s window_size_sec=300
+BM_ScanMultimeter/10/1             2462 us         2462 us          282 events_per_sec=10 items_per_second=8.12397M/s window_size_sec=1
+BM_ScanMultimeter/10/10           15083 us        15083 us           46 events_per_sec=10 items_per_second=1.32601M/s window_size_sec=10
+BM_ScanMultimeter/10/60           79673 us        79670 us            9 events_per_sec=10 items_per_second=251.035k/s window_size_sec=60
+BM_ScanMultimeter/10/180         230339 us       230335 us            3 events_per_sec=10 items_per_second=86.8301k/s window_size_sec=180
+BM_ScanMultimeter/10/300         370022 us       370014 us            2 events_per_sec=10 items_per_second=54.0519k/s window_size_sec=300
+BM_ScanMultimeter/1000/1         132488 us       132483 us            5 events_per_sec=1k items_per_second=150.963k/s window_size_sec=1
+BM_ScanMultimeter/1000/10       1073712 us      1073681 us            1 events_per_sec=1k items_per_second=18.6275k/s window_size_sec=10
+BM_ScanMultimeter/1000/60       1493595 us      1493573 us            1 events_per_sec=1k items_per_second=13.3907k/s window_size_sec=60
+BM_ScanMultimeter/1000/180      1491884 us      1491858 us            1 events_per_sec=1k items_per_second=13.4061k/s window_size_sec=180
+BM_ScanMultimeter/1000/300      1493114 us      1493097 us            1 events_per_sec=1k items_per_second=13.395k/s window_size_sec=300
+BM_StreamMultimeter/1/1            3486 us         3486 us          201 events_per_sec=1 items_per_second=5.73785M/s window_size_sec=1
+BM_StreamMultimeter/1/10           3387 us         3387 us          201 events_per_sec=1 items_per_second=5.90472M/s window_size_sec=10
+BM_StreamMultimeter/1/60           3769 us         3769 us          186 events_per_sec=1 items_per_second=5.30586M/s window_size_sec=60
+BM_StreamMultimeter/1/180          3781 us         3781 us          185 events_per_sec=1 items_per_second=5.29017M/s window_size_sec=180
+BM_StreamMultimeter/1/300          3791 us         3791 us          185 events_per_sec=1 items_per_second=5.27561M/s window_size_sec=300
+BM_StreamMultimeter/10/1           3916 us         3916 us          179 events_per_sec=10 items_per_second=5.10712M/s window_size_sec=1
+BM_StreamMultimeter/10/10          3752 us         3752 us          187 events_per_sec=10 items_per_second=5.33015M/s window_size_sec=10
+BM_StreamMultimeter/10/60          3766 us         3766 us          186 events_per_sec=10 items_per_second=5.31067M/s window_size_sec=60
+BM_StreamMultimeter/10/180         3788 us         3788 us          185 events_per_sec=10 items_per_second=5.28017M/s window_size_sec=180
+BM_StreamMultimeter/10/300         3736 us         3736 us          188 events_per_sec=10 items_per_second=5.35356M/s window_size_sec=300
+BM_StreamMultimeter/1000/1         3819 us         3819 us          184 events_per_sec=1k items_per_second=5.23638M/s window_size_sec=1
+BM_StreamMultimeter/1000/10        3660 us         3660 us          191 events_per_sec=1k items_per_second=5.46414M/s window_size_sec=10
+BM_StreamMultimeter/1000/60        3345 us         3344 us          212 events_per_sec=1k items_per_second=5.98003M/s window_size_sec=60
+BM_StreamMultimeter/1000/180       3305 us         3305 us          211 events_per_sec=1k items_per_second=6.05079M/s window_size_sec=180
+BM_StreamMultimeter/1000/300       3297 us         3297 us          210 events_per_sec=1k items_per_second=6.06673M/s window_size_sec=300

@@ -82,263 +82,78 @@ The system is built from small, focused, composable components that separate con
 └──────────────────────┘
 ```
 
-### Core Infrastructure Components
+### Core Components
 
-#### **1. `codec/` - JSON Encoding/Decoding**
-- **Purpose**: Zero-copy JSON parsing with compile-time type safety
-- **Key Features**:
-  - Uses `daw_json_link` for high-performance deserialization
-  - Compile-time schema validation
-  - No runtime reflection overhead
-- **Benefit**: Fast message parsing without dynamic allocation
-
-#### **2. `reflect/` - Compile-Time Reflection**
-- **Purpose**: Type introspection and enum string conversion
-- **Key Features**:
-  - `enum_to_string` and `enum_from_string` for type-safe CLI parsing
-  - No runtime overhead - all resolved at compile time
-- **Benefit**: Type-safe configuration without boilerplate
-
-#### **3. `logger/` - Structured Logging**
-- **Purpose**: Formatted logging with `std::format` integration
-- **Key Features**:
-  - Level-based logging (info, error, debug)
-  - Type-safe format strings
-- **Benefit**: Clean diagnostics without printf-style errors
-
-#### **4. `meta/` - Metaprogramming Utilities**
-- **Purpose**: Compile-time data structures and type manipulation
-- **Key Features**:
-  - `meta::map` - Compile-time key-value mapping (exchange factory)
-  - `meta::typed<Value>` - Value-to-type conversion
-  - `meta::list` - Type list manipulation
-- **Benefit**: Runtime dispatch with compile-time optimization
-
-#### **5. `types/` - Strong Type System**
-- **Purpose**: Type-safe financial primitives
-- **Key Features**:
-  - `price`, `quantity` - Fixed-point decimals (no floating-point errors)
-  - `timestamp`, `trade_id` - Strong type wrappers
-  - `result<T>` - Monadic error handling
-- **Benefit**: Eliminates unit confusion and precision loss
-
-#### **6. `network/` - Transport Layer**
-- **Purpose**: WebSocket/TLS/TCP abstraction
-- **Key Features**:
-  - Boost.Beast for WebSocket over TLS
-  - Async I/O with io_context
-  - Connection lifecycle management
-- **Benefit**: Exchange-agnostic transport layer
-
-#### **7. `protocol/` - Message Protocol Layer**
-- **Purpose**: Exchange-neutral message types
-- **Key Features**:
-  - Generic `trade_summary`, `subscribe`, `heartbeat` messages
-  - Exchange-specific codecs (Coinbase/Bybit)
-  - Frozen hashmaps for O(1) message type dispatch
-- **Benefit**: Single codebase supports multiple exchanges
-
-**Message Type Dispatch Example:**
-```cpp
-// Compile-time hashmap for O(1) type identification
-constexpr auto mapper = frozen::unordered_map<frozen::string, std::size_t, 3>{
-    {"heartbeat", 0}, {"subscriptions", 1}, {"ticker", 2}
-};
-```
-
-#### **8. `exchange/` - Exchange Integration**
-- **Purpose**: Compose network + protocol + transformers
-- **Key Features**:
-  - `coinbase/` - Coinbase-specific transformer
-  - `bybit/` - Bybit-specific transformer
-  - `factory/` - Compile-time exchange selection
-- **Benefit**: Add new exchanges without modifying core logic
-
-#### **9. `components/` - Reusable Session Templates**
-- **Purpose**: Generic session orchestration
-- **Key Features**:
-  - `session_id` - Application identification
-  - `feeder::codegen` - Compose encoder/decoder/transformer
-  - `scheduler` - Event scheduling
-- **Benefit**: Consistent session pattern across exchanges
-
-#### **10. `metrics/` - Sliding Window Statistics**
-- **Purpose**: Time-windowed metric calculation
-- **Key Features**:
-  - `timeline<T>` - Automatic event expiration
-  - `scan::multimeter` - O(n log n) recalculation
-  - `stream::multimeter` - O(log n) incremental updates
-- **Benefit**: Tunable performance vs. memory tradeoff
+- **codec/**: Zero-copy JSON parsing with `daw_json_link` - no allocation overhead
+- **reflect/**: Compile-time reflection for enum↔string conversion
+- **logger/**: Structured logging with `std::format`
+- **meta/**: Compile-time maps and type utilities for dispatch optimization
+- **types/**: Strong financial types (`price`, `quantity`) with fixed-point arithmetic
+- **network/**: WebSocket/TLS abstraction using Boost.Beast
+- **protocol/**: Exchange-neutral messages with frozen hashmaps for O(1) dispatch
+- **exchange/**: Coinbase/Bybit integration with compile-time factory selection
+- **components/**: Reusable session templates and scheduling
+- **metrics/**: Sliding window statistics with scan (O(n log n)) vs stream (O(log n)) implementations
 
 
-## Metrics Implementations: Scan vs Stream
-
-### Algorithmic Comparison
-
-The system provides two implementations optimized for different use cases:
+### Metrics Implementations: Scan vs Stream
 
 | Implementation | Time Complexity | Space Complexity | Best For |
 ||-||-|
-| **Scan** | O(n log n) | O(n) | Low event rate, small windows, infrequent reads |
-| **Stream** | O(log n) | O(4n) | High event rate, large windows, frequent reads |
+| **Scan** | O(n log n) | O(n) | Low event rate, small windows |
+| **Stream** | O(log n) | O(4n) | High event rate, frequent reads |
 
-### Scan Multimeter: O(n log n) Recalculation
+**Scan Multimeter:**
+- Shared timeline across all metrics (memory efficient)
+- On each read: sorts for median, scans for min/max/mean
+- Best for: < 100 events, infrequent metric sampling
 
-**Algorithm:**
-- Shares single `timeline` across all metrics (memory efficient)
-- On each metric read: sorts timeline for median, scans for min/max/mean
-- Simple implementation with excellent cache locality
+**Stream Multimeter:**
+- Independent data structures per metric
+- Median: priority queue, Min/Max: heaps, Mean: running sum
+- Best for: 1000+ events/second, frequent reads
 
-```cpp
-auto multimeter = metrics::scan::multimeter<trade_summary>(std::chrono::minutes(5));
+**Performance Results:**
+- Stream vs Scan at 1000 events/s: **451× faster**
+- Stream maintains O(log n) regardless of window size
 
-// Per-event cost:
-// 1. Insert into timeline: O(1)
-// 2. Remove expired events: O(k) where k = expired count
-// 3. Sort for median: O(n log n)
-// 4. Linear scan for min/max/mean: O(n)
+### Design Benefits
+
+1. **Separation of Concerns**: Each component has single responsibility (network, protocol, metrics, etc.)
+2. **Compile-Time Optimization**: User selects exchange/metrics via CLI, templates optimize hot paths at compile time
+3. **Type Safety**: Strong types (`price`, `quantity`) and result monads eliminate runtime errors
+4. **Zero-Copy Architecture**: Direct JSON parsing from network buffer with no intermediate copies
+5. **Scalable Performance**: Stream metrics handle 1000+ events/second with O(log n) complexity
+
+### Testing and Dependencies
+
+**Prerequisites:** C++20 compiler, [xmake](https://xmake.io/), Conan 2.0+
+
+**Key Dependencies:** Boost.Beast, OpenSSL, daw_json_link, Google Test/Benchmark, CLI11
+
+**Build Commands:**
+```bash
+xmake config -m release && xmake build   # Release build
+xmake test                               # Run all tests (90 test cases)
+xmake run metrics-capture --help         # Usage info
 ```
-
-**Performance Characteristics:**
-- **Cache-friendly**: Sequential memory access patterns
-- **Low memory overhead**: Single shared timeline container
-- **Small window advantage**: At small n (< 100 events), sorting overhead is minimal
-- **Infrequent reads**: Amortizes O(n log n) cost when metrics sampled less frequently than events
-
-### Stream Multimeter: O(log n) Incremental Updates
-
-**Algorithm:**
-- Each metric maintains independent timeline + specialized data structure
-- Median: priority queue with middle element tracking
-- Min/Max: heaps for logarithmic insert/delete
-- Mean: running sum + count (O(1))
-
-```cpp
-auto multimeter = metrics::stream::multimeter<trade_summary>(std::chrono::minutes(5));
-
-// Per-event cost:
-// 1. Insert into timeline: O(1)
-// 2. Update median priority queue: O(log n)
-// 3. Update min/max heaps: O(log n)
-// 4. Update running mean: O(1)
-```
-
-**Performance Characteristics:**
-- **Predictable latency**: Consistent O(log n) worst-case performance
-- **Window size independence**: Minimal performance degradation with larger windows
-- **High throughput**: Handles 1000+ events/second efficiently
-- **Frequent reads**: No recalculation cost on each metric access
-
-## Benefits of This Design
-
-### 1. **Separation of Concerns**
-Each component has a single, well-defined responsibility:
-- **Network**: Connection management
-- **Protocol**: Message encoding/decoding
-- **Exchange**: Exchange-specific transformations
-- **Metrics**: Statistical calculations
-- **Application**: Orchestration
-
-**Benefit**: Easy to test, debug, and extend individual components without affecting others.
-
-### 2. **Compile-Time Dispatch with Runtime Flexibility**
-- **Runtime**: User selects exchange/metrics via CLI
-- **Compile-time**: Template instantiation optimizes hot path
-
-```cpp
-// User: "metrics-capture -e coinbase -m stream"
-// Runtime: Parse "coinbase" → exchange_id::coinbase
-// Compile-time: Instantiate execute<exchange_id::coinbase, type::stream>()
-```
-
-**Benefit**: Zero runtime overhead for type dispatch, full optimization of critical paths.
-
-### 3. **Type Safety Eliminates Runtime Errors**
-- **Strong types**: `price`, `quantity`, `timestamp` prevent unit confusion
-- **Result monad**: Explicit error handling without exceptions
-- **Enum reflection**: String→Enum conversion validated at parse time
-
-**Benefit**: Entire classes of bugs (unit errors, precision loss) are compile-time errors.
-
-### 4. **Reusability Through Composition**
-- **Exchange factory**: Add new exchange = implement contract + register in factory
-- **Metrics**: Timeline + algorithm separation enables easy experimentation
-- **Session template**: Same pattern for all exchanges
-
-**Benefit**: Adding Binance/Kraken support requires only exchange-specific transformer, reuses entire infrastructure.
-
-### 5. **Performance by Design**
-- **Zero-copy parsing**: JSON decoded directly into structs
-- **Fixed-point math**: No floating-point precision loss
-- **Compile-time dispatch**: No virtual function overhead
-- **Cache-friendly scan**: Sequential memory access for small datasets
-
-**Benefit**: Latency-sensitive paths are optimized at compile time.
-
-### 6. **Testability**
-- Each component has clear inputs/outputs
-- Timeline logic isolated from metrics algorithms
-- Mock exchanges via contract pattern
-- Unit tests cover scan/stream implementations independently
-
-**Benefit**: Comprehensive test coverage with minimal mocking infrastructure.
-
-### 7. **Extensibility**
-Want to add a new metric (e.g., standard deviation)?
-- Implement `stream::stddev` and `scan::stddev`
-- Add field to `metrics` struct
-- Zero changes to network/protocol/exchange layers
-
-**Benefit**: Feature additions are localized and non-invasive.
-
-## Building and Testing
-
-### Prerequisites
-
-- **Compiler**: C++20 or later (GCC 11+, Clang 14+, MSVC 2022+)
-- **Build System**: [xmake](https://xmake.io/)
-- **Package Manager**: Conan 2.0+
-
-### Dependencies
-
-All dependencies are automatically managed via Conan:
-- **Networking**: Boost.Asio, Boost.Beast, OpenSSL
-- **JSON**: daw_json_link (zero-copy parsing)
-- **Testing**: Google Test, Google Benchmark
-- **Utilities**: CLI11, magic_enum, frozen (compile-time maps), xxhash
-
-See [xmake.lua](xmake.lua) for full dependency list.
 
 ### Project Structure
 
 ```
 sparkland/
-├── apps/
-│   └── metrics-capture/    # Main application binary
-├── codec/                  # JSON encoding/decoding (daw_json_link)
-├── components/             # Reusable session/scheduler templates
-├── core/                   # Utilities (assert, result monad)
-├── exchange/               # Exchange-specific implementations
-│   ├── coinbase/           # Coinbase connector, transformer, session
-│   ├── bybit/              # Bybit implementation
-│   └── factory/            # Compile-time exchange factory
-├── logger/                 # Structured logging with std::format
-├── meta/                   # Metaprogramming (map, typed, list)
-├── metrics/                # Sliding window metrics
-│   ├── benchmark/          # Performance benchmarks
-│   ├── include/spl/metrics/
-│   │   ├── scan/           # O(n log n) recalculative metrics
-│   │   └── stream/         # O(log n) incremental metrics
-│   └── test/               # Unit tests
-├── network/                # WebSocket/TLS/TCP layer (Boost.Beast)
-├── protocol/               # Protocol definitions and codecs
-│   ├── coinbase/           # Coinbase WebSocket protocol
-│   ├── bybit/              # Bybit WebSocket protocol
-│   ├── feeder/             # Generic market data protocol
-│   └── common/             # Shared types (exchange_id, price, etc.)
-├── reflect/                # Compile-time reflection (enum conversion)
-├── result/                 # Result monad for error handling
-├── types/                  # Strong types (price, quantity, timestamp)
+├── apps/metrics-capture/   # Main application binary
+├── codec/                  # Zero-copy JSON parsing (daw_json_link)
+├── components/             # Session/scheduler templates
+├── exchange/               # Exchange integrations (Coinbase/Bybit)
+├── logger/                 # Structured logging
+├── meta/                   # Compile-time metaprogramming
+├── metrics/                # Sliding window statistics + benchmarks
+├── network/                # WebSocket/TLS layer (Boost.Beast)
+├── protocol/               # Message protocols and codecs
+├── reflect/                # Compile-time reflection
+├── result/                 # Result monad
+├── types/                  # Strong financial types
 └── xmake.lua               # Build configuration
 ```
 
