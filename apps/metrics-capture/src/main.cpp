@@ -5,6 +5,7 @@
 #include "spl/protocol/common/exchange_id.hpp"
 
 #include <CLI/CLI.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <format>
@@ -12,6 +13,8 @@
 #include <csignal>
 #include <atomic>
 #include <string>
+#include <optional>
+#include <filesystem>
 
 struct arguments {
     spl::protocol::common::exchange_id exchange_id{spl::protocol::common::exchange_id::coinbase};
@@ -19,6 +22,7 @@ struct arguments {
     spl::protocol::common::timestamp period{std::chrono::minutes(5)};
     spl::protocol::common::timestamp duration{std::chrono::hours(1)};
     spl::metrics::type type{spl::metrics::type::stream};
+    std::optional<std::filesystem::path> output{};
 
     [[nodiscard]] static auto from(int argc, char** argv) noexcept -> spl::result<arguments> {
         CLI::App app{"Sparkland Metrics Capture - Real-time exchange metrics collector"};
@@ -29,17 +33,18 @@ struct arguments {
         auto instrument_str = std::string(args.instrument_id);
         auto window         = std::chrono::duration_cast<std::chrono::minutes>(args.period).count();
         auto duration       = std::chrono::duration_cast<std::chrono::minutes>(args.duration).count();
+        auto output         = std::string{};
 
         app.add_option("-e,--exchange", exchange_str, "Exchange to connect to (bybit, coinbase)")
-            ->default_val("bybit")
+            ->default_val(exchange_str)
             ->check(CLI::IsMember({"bybit", "coinbase"}));
 
         app.add_option("-m,--metrics", metrics_str, "Metrics type to use (stream, scan)")
-            ->default_val("stream")
+            ->default_val(metrics_str)
             ->check(CLI::IsMember({"stream", "scan"}));
 
         app.add_option("-i,--instrument", instrument_str, "Instrument to track (e.g., BTCUSDT)")
-            ->default_val("BTC-USDT");
+            ->default_val(instrument_str);
 
         app.add_option("-w,--window", window, "Window size in minutes for metrics calculation")
             ->default_val(5)
@@ -49,9 +54,10 @@ struct arguments {
             ->default_val(60)
             ->check(CLI::PositiveNumber);
 
+        app.add_option("-o,--output", output, "Output CSV file path");
+
         try {
             app.parse(argc, argv);
-            return spl::success();
         } catch (const CLI::ParseError& e) {
             std::ignore = app.exit(e);
             return spl::failure("Failed to parse command-line arguments: {}", e.what());
@@ -62,6 +68,7 @@ struct arguments {
         args.instrument_id = spl::protocol::common::instrument_id{instrument_str};
         args.period        = spl::protocol::common::timestamp{std::chrono::minutes(window)};
         args.duration      = spl::protocol::common::timestamp{std::chrono::minutes(duration)};
+        args.output        = not std::empty(output) ? std::make_optional(std::filesystem::path{output}) : std::nullopt;
         return args;
     }
 };
@@ -73,12 +80,21 @@ template <spl::protocol::common::exchange_id ExchangeIdV, spl::metrics::type Met
     using trade_summary   = spl::protocol::feeder::trade::trade_summary;
     using multimeter_type = spl::metrics::multimeter<MetricsTypeV, trade_summary>;
 
+    auto output = std::ofstream{};
+    if (args.output) {
+        spl::logger::info("Exporting capture data to file: {}", args.output.value().string());
+        output.open(args.output.value(), std::ios::out);
+        if (not output.is_open()) {
+            return spl::failure("Failed to open output file: {}", args.output.value().string());
+        }
+    }
+
     auto context    = spl::network::context();
     auto identifier = spl::components::feeder::session_id{"metrics-capture", "exchange"};
     auto session    = session_type(context, identifier);
-    auto multimeter = multimeter_type(std::chrono::minutes(5));
+    auto multimeter = multimeter_type(args.period);
 
-    spl::logger::info("Connecting to exchange...");
+    spl::logger::info("Connecting to exchange {}...", ExchangeIdV);
     err_return(session.connect());
 
     spl::logger::info("Subscribing to {} trades...", args.instrument_id);
@@ -95,12 +111,21 @@ template <spl::protocol::common::exchange_id ExchangeIdV, spl::metrics::type Met
         err_return(session.poll([&]<typename EventT>(EventT&& event) -> spl::result<void> {
             if constexpr (requires { multimeter(std::forward<EventT>(event)); }) {
                 auto const metrics = multimeter(std::forward<EventT>(event));
+                if (output.is_open()) {
+                    output << std::format("{},{},{},{},{}\n",        //
+                                          metrics.timestamp.count(), //
+                                          metrics.minimum,           //
+                                          metrics.maximum,           //
+                                          metrics.median,            //
+                                          metrics.mean);
+                    output.flush();
+                    return spl::success();
+                }
                 spl::logger::info("{}", metrics);
             }
             return spl::success();
         }));
     }
-
     return spl::success();
 }
 
